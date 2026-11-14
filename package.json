@@ -12,7 +12,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node --env-file=.env dist/main.js",
+    "start:prod": "node dist/main.js",
     "lint": "oxlint --type-aware src/ test/",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "eval": "nest build && node --env-file=.env dist/eval/run.js"
+    "eval": "nest build && node dist/eval/run.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.105",

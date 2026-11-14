@@ -56,6 +56,11 @@ three sample eval cases, CI workflow, Docker Compose file.
    numbers the code produced.
 5. **A wrong comment** in the same file claimed a missed stop scores 7 wrong fields. It is 8.
 6. **A lint warning** for sorting numbers without a compare function. Fixed.
+7. **The app did not read `.env`.** The first version only worked when variables were exported
+   in the shell, so the README's own instructions would have failed on a fresh clone. Caught by:
+   following the README steps with a temporary `.env` instead of exported variables. Fixed with
+   `ConfigModule.forRoot()` in the app and the eval runner, and `process.loadEnvFile` in
+   `drizzle.config.ts`.
 
 ### What was verified
 
@@ -69,7 +74,8 @@ three sample eval cases, CI workflow, Docker Compose file.
 ### What was NOT verified
 
 - **No real model call has succeeded.** Extraction quality is unknown. There are no eval numbers.
-- `npm run eval` has never run end to end.
+- `npm run eval` has never run end to end. With an invalid key it loads the dataset and fails at
+  the provider with an authentication error, which shows it reaches the model call and no more.
 - The CI workflow has never run on GitHub.
 - `docker compose up` was not run (the agent's machine had Postgres installed directly).
 - The three eval labels were written by the agent and are unchecked.

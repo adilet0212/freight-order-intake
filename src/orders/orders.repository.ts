@@ -161,15 +161,13 @@ async function insertChildren(
       );
   }
   if (order.commodities.length > 0) {
-    await tx
-      .insert(commodities)
-      .values(
-        order.commodities.map((commodity, sequence) => ({
-          ...commodity,
-          orderId,
-          sequence,
-        })),
-      );
+    await tx.insert(commodities).values(
+      order.commodities.map((commodity, sequence) => ({
+        ...commodity,
+        orderId,
+        sequence,
+      })),
+    );
   }
 }
 

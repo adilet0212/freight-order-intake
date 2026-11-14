@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { Module } from '@nestjs/common';
 import { AiModule } from '@nestjs/ai';
+import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { modelFromEnv } from '../llm.js';
 import { PROMPT_VERSION } from '../orders/extraction.prompt.js';
@@ -19,6 +20,7 @@ const RESULTS_DIR = path.resolve('eval/results');
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     AiModule.forRootAsync({
       isGlobal: true,
       useFactory: () => ({
