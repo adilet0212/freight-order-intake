@@ -1,0 +1,14 @@
+{
+  "id": "003-not-an-order-tracking",
+  "description": "A tracking complaint that mentions a PO and an address but does not ask to move freight",
+  "labelledBy": "agent draft - Adilet to verify by hand",
+  "email": {
+    "subject": "Where is my truck?? PO 47990",
+    "body": "Hi, driver was supposed to be at our Chicago DC at 9 this morning and nobody has shown up. Can someone send me an ETA asap. PO 47990.\n\nMarcus\nLakeshore Grocers receiving",
+    "receivedAt": "2026-11-18T10:31:00-06:00"
+  },
+  "expected": {
+    "isOrderRequest": false,
+    "order": null
+  }
+}

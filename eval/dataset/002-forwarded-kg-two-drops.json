@@ -1,0 +1,61 @@
+{
+  "id": "002-forwarded-kg-two-drops",
+  "description": "Forwarded thread where the newer message corrects the older one; kilograms; two deliveries; relative date",
+  "labelledBy": "agent draft - Adilet to verify by hand",
+  "email": {
+    "subject": "Fwd: RE: Montreal pickup tomorrow",
+    "body": "can you guys cover this? need it picked up tomorrow. see below, note the weight changed\n\nSent from my iPhone\n\n---------- Forwarded message ---------\nFrom: Luc Tremblay <luc@norddistribution.example>\nDate: Mon, Nov 16, 2026 at 2:10 PM\nSubject: RE: Montreal pickup\n\nCorrection to my earlier note - it's 12 pallets not 10, total 5 400 kg. Reefer, keep at 2C.\nPick up at our dock: Nord Distribution, 8800 boul. Henri-Bourassa O, Montréal QC H4S 1P4, anytime after 7h.\nDrop 1: 5 pallets to Fresh Basket #212, 1455 Bank St, Ottawa ON K1H 7Z1\nDrop 2: 7 pallets to Fresh Basket #340, 2200 Eglinton Ave E, Scarborough ON M1L 4S8, must deliver Wednesday before 14:00\nRef NDX-7731\n\n> On Nov 16, 2026, at 9:02 AM, Luc Tremblay wrote:\n> 10 pallets, 4 500 kg going to Ottawa and Scarborough, dry van is fine.",
+    "receivedAt": "2026-11-16T15:42:00-05:00"
+  },
+  "expected": {
+    "isOrderRequest": true,
+    "order": {
+      "customerName": "Nord Distribution",
+      "referenceNumber": "NDX-7731",
+      "equipmentType": "reefer",
+      "stops": [
+        {
+          "type": "pickup",
+          "companyName": "Nord Distribution",
+          "street": "8800 boul. Henri-Bourassa O",
+          "city": "Montréal",
+          "region": "QC",
+          "postalCode": "H4S 1P4",
+          "windowStart": "2026-11-17T07:00",
+          "windowEnd": null
+        },
+        {
+          "type": "delivery",
+          "companyName": "Fresh Basket #212",
+          "street": "1455 Bank St",
+          "city": "Ottawa",
+          "region": "ON",
+          "postalCode": "K1H 7Z1",
+          "windowStart": null,
+          "windowEnd": null
+        },
+        {
+          "type": "delivery",
+          "companyName": "Fresh Basket #340",
+          "street": "2200 Eglinton Ave E",
+          "city": "Scarborough",
+          "region": "ON",
+          "postalCode": "M1L 4S8",
+          "windowStart": "2026-11-18T00:00",
+          "windowEnd": "2026-11-18T14:00"
+        }
+      ],
+      "commodities": [
+        {
+          "description": null,
+          "quantity": 12,
+          "commodityType": "skid",
+          "weightLbs": 11905
+        }
+      ],
+      "rateAmount": null,
+      "rateCurrency": null,
+      "specialInstructions": "Keep at 2C"
+    }
+  }
+}

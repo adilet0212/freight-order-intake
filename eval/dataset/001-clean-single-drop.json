@@ -1,0 +1,51 @@
+{
+  "id": "001-clean-single-drop",
+  "description": "Well-formed tender, one pickup and one delivery, pounds",
+  "labelledBy": "agent draft - Adilet to verify by hand",
+  "email": {
+    "subject": "Load tender - PO 48213 - Brampton to Chicago",
+    "body": "Hi team,\n\nPlease book the following for Maple Ridge Foods.\n\nPO: 48213\nPickup: Maple Ridge Foods, 120 Industrial Rd, Brampton ON L6T 4X3 - Tuesday Nov 17, 8am to noon\nDeliver: Lakeshore Grocers DC, 4500 W 47th St, Chicago IL 60632 - Wed Nov 18 by appointment at 9:00\n\n18 skids canned goods, 21,600 lbs, dry van.\nRate as agreed: $1,850 USD all in.\n\nThanks,\nDana Whitfield\nMaple Ridge Foods",
+    "receivedAt": "2026-11-16T14:05:00-05:00"
+  },
+  "expected": {
+    "isOrderRequest": true,
+    "order": {
+      "customerName": "Maple Ridge Foods",
+      "referenceNumber": "48213",
+      "equipmentType": "dry_van",
+      "stops": [
+        {
+          "type": "pickup",
+          "companyName": "Maple Ridge Foods",
+          "street": "120 Industrial Rd",
+          "city": "Brampton",
+          "region": "ON",
+          "postalCode": "L6T 4X3",
+          "windowStart": "2026-11-17T08:00",
+          "windowEnd": "2026-11-17T12:00"
+        },
+        {
+          "type": "delivery",
+          "companyName": "Lakeshore Grocers DC",
+          "street": "4500 W 47th St",
+          "city": "Chicago",
+          "region": "IL",
+          "postalCode": "60632",
+          "windowStart": "2026-11-18T09:00",
+          "windowEnd": null
+        }
+      ],
+      "commodities": [
+        {
+          "description": "Canned goods",
+          "quantity": 18,
+          "commodityType": "skid",
+          "weightLbs": 21600
+        }
+      ],
+      "rateAmount": 1850,
+      "rateCurrency": "USD",
+      "specialInstructions": null
+    }
+  }
+}
