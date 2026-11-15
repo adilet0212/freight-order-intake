@@ -1,0 +1,7 @@
+{
+  "email": {
+    "subject": "Order PO 20993 - Edmonton to Kelowna",
+    "body": "Hi,\n\nWe need a truck for the below. Weights are in kgs, sorry, our system is metric.\n\nPickup: Northern Lights Beverages, 12220 160 St NW, Edmonton AB T5V 1H5, Mon Nov 23, 10:00\nDelivery: Okanagan Liquor Depot, 1050 Ellis St, Kelowna BC V1Y 1Z5, Tue Nov 24 before 16:00\n\n22 pallets bottled water, 12,000 kgs\n\nWe'll pay $2,800 CAD.\n\nTheo Brandt\nNorthern Lights Beverages",
+    "receivedAt": "2026-11-19T11:18:00-07:00"
+  }
+}

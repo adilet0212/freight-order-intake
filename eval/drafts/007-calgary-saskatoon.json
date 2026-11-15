@@ -1,0 +1,7 @@
+{
+  "email": {
+    "subject": "Shipment booking request - Calgary AB to Saskatoon SK",
+    "body": "Good afternoon,\n\nPlease find our booking request below.\n\nShipper: Foothills Building Materials Ltd.\nPurchase order number: FBM-77402\n\nCollection: 4120 - 80 Ave SE, Calgary, Alberta T2C 2Y4, Monday 23 November 2026, 09:00-15:00\nDelivery: Prairie Lumber Yard, 2205 Faithfull Ave, Saskatoon, Saskatchewan S7K 1Z8, Tuesday 24 November 2026, 08:00-12:00\n\nGoods: 20 bundles of treated lumber, gross weight 42,000 lb. Flatbed with tarps.\nAgreed rate: CAD 3,150.00.\n\nKind regards,\nMargaret O'Donnell\nTransportation Manager, Foothills Building Materials Ltd.",
+    "receivedAt": "2026-11-17T16:20:00-07:00"
+  }
+}
