@@ -1,0 +1,7 @@
+{
+  "email": {
+    "subject": "Invoice #77104 - wrong amount",
+    "body": "Good afternoon,\n\nWe received invoice #77104 dated Nov 12 for the load we shipped Sudbury ON to London ON on Nov 5 (our PO NW-4471, 12 skids mining fittings).\n\nThe invoice shows $1,480.00 CAD line haul plus $225.00 detention at delivery. Our confirmed rate was $1,250.00 CAD all in, as per the rate confirmation your dispatcher sent when we booked. We also have no record of any detention being approved - the receiver's gate log shows the driver in at 10:05 and out at 11:20 on a 10:00 appointment.\n\nPlease send a corrected invoice for $1,250.00 CAD. We will hold payment on 77104 until then.\n\nRegards,\n\nDeborah Gauthier\nAccounts Payable\nNickel Way Industrial Supply\n705-555-0192 ext 3",
+    "receivedAt": "2026-11-17T14:18:00-05:00"
+  }
+}
