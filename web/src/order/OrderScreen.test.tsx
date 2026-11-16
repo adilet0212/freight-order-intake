@@ -276,6 +276,44 @@ describe('OrderScreen', () => {
     expect(sentBody(patchCalls()[0][1]).commodities[0].quantity).toBe(3);
   });
 
+  it('shows each freight message once, in its own freight line, tied to its own field', async () => {
+    const user = userEvent.setup();
+    const order = heldOrder();
+    serve({ order });
+    renderOrder(order.id);
+    const line = within(
+      await screen.findByRole('group', { name: 'Freight line 1' }),
+    );
+    const quantityMessage = 'Quantity must be a whole number above 0';
+    const weightMessage = 'Weight must be a whole number above 0';
+
+    const quantity = line.getByLabelText('Quantity');
+    const weight = line.getByLabelText('Weight (lbs)');
+    await user.clear(quantity);
+    await user.type(quantity, '2.5');
+    await user.clear(weight);
+    await user.type(weight, 'abc');
+
+    // The messages sit under the row, not under the narrow fields, so each field
+    // has to stay tied to its own one.
+    expect(quantity).toHaveAccessibleDescription(quantityMessage);
+    expect(weight).toHaveAccessibleDescription(weightMessage);
+    expect(line.getAllByText(quantityMessage)).toHaveLength(1);
+    expect(line.getAllByText(weightMessage)).toHaveLength(1);
+    expect(line.getByLabelText('Description')).toBeValid();
+    expect(
+      line.getByLabelText('Description'),
+    ).not.toHaveAccessibleDescription();
+
+    // Correcting one field removes its message and leaves the other.
+    await user.clear(weight);
+    await user.type(weight, '48000');
+    expect(weight).toBeValid();
+    expect(weight).not.toHaveAccessibleDescription();
+    expect(screen.queryByText(weightMessage)).not.toBeInTheDocument();
+    expect(quantity).toHaveAccessibleDescription(quantityMessage);
+  });
+
   it('disables the button while the approval is on its way, so it cannot be sent twice', async () => {
     const user = userEvent.setup();
     const order = heldOrder();

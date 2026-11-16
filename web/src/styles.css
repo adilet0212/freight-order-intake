@@ -772,6 +772,15 @@ table.queue {
   font-size: 12px;
 }
 
+.row-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Pulled up into the grid's bottom padding so it reads as part of the row. */
+  margin-top: -6px;
+  padding: 0 14px 10px;
+}
+
 .row-group {
   position: relative;
   margin: 0;

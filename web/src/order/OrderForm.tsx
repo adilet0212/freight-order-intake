@@ -43,6 +43,7 @@ export function OrderForm({
 }: Props) {
   const errorFor = (field: string) =>
     errors.find((error) => error.field === field)?.message;
+  const formId = useId();
 
   const set = (change: Partial<OrderFormState>) =>
     onChange({ ...form, ...change });
@@ -321,6 +322,7 @@ export function OrderForm({
                 <Field
                   label="Quantity"
                   error={errorFor(`commodities.${index}.quantity`)}
+                  errorId={`${formId}-${commodity.key}-quantity`}
                 >
                   {(id, describedBy) => (
                     <input
@@ -359,6 +361,7 @@ export function OrderForm({
               <Field
                 label="Weight (lbs)"
                 error={errorFor(`commodities.${index}.weightLbs`)}
+                errorId={`${formId}-${commodity.key}-weight`}
               >
                 {(id, describedBy) => (
                   <input
@@ -374,6 +377,20 @@ export function OrderForm({
                 )}
               </Field>
             </div>
+            {/* Quantity is too narrow a field to carry a sentence under it, so the
+                messages for this line get the full width below it. */}
+            <RowErrors
+              messages={[
+                {
+                  id: `${formId}-${commodity.key}-quantity`,
+                  text: errorFor(`commodities.${index}.quantity`),
+                },
+                {
+                  id: `${formId}-${commodity.key}-weight`,
+                  text: errorFor(`commodities.${index}.weightLbs`),
+                },
+              ]}
+            />
             {editable && (
               <button
                 type="button"
@@ -419,29 +436,56 @@ export function OrderForm({
   );
 }
 
-/** A label, its control, and the control's error underneath when it has one. */
+/**
+ * A label, its control, and the control's error underneath when it has one.
+ * With `errorId` the message is shown elsewhere (see RowErrors) under that id, and the
+ * control is only tied to it.
+ */
 function Field({
   label,
   span = 1,
   error,
+  errorId,
   children,
 }: {
   label: string;
   span?: 1 | 2 | 3 | 4;
   error?: string;
+  errorId?: string;
   children: (id: string, describedBy: string | undefined) => ReactNode;
 }) {
   const id = useId();
-  const errorId = `${id}-error`;
+  const describedBy = errorId ?? `${id}-error`;
   return (
     <div className={`field span-${span}${error ? ' invalid' : ''}`}>
       <label htmlFor={id}>{label}</label>
-      {children(id, error ? errorId : undefined)}
-      {error && (
-        <span id={errorId} className="field-error">
+      {children(id, error ? describedBy : undefined)}
+      {error && !errorId && (
+        <span id={describedBy} className="field-error">
           {error}
         </span>
       )}
+    </div>
+  );
+}
+
+/** The messages for one row of fields, each on a line of its own under the row. */
+function RowErrors({
+  messages,
+}: {
+  messages: { id: string; text: string | undefined }[];
+}) {
+  const shown = messages.filter((message) => message.text !== undefined);
+  if (shown.length === 0) {
+    return null;
+  }
+  return (
+    <div className="row-errors">
+      {shown.map((message) => (
+        <span key={message.id} id={message.id} className="field-error">
+          {message.text}
+        </span>
+      ))}
     </div>
   );
 }
