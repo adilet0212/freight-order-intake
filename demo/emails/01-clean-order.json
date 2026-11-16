@@ -1,0 +1,6 @@
+{
+  "messageId": "<demo-01-tender-77120@northfield-paper.example>",
+  "subject": "Load tender PO 77120 - Hamilton ON to Detroit MI",
+  "body": "Hi dispatch,\n\nPlease book the following load.\n\nPO 77120\nEquipment: 53' dry van\n\nPickup: Northfield Paper Co., 85 Burlington St E, Hamilton, ON L8L 4G9\nThursday 19 November 2026, 08:00 to 12:00\n\nDelivery: Riverside Office Supply DC, 2200 W Fort St, Detroit, MI 48216\nFriday 20 November 2026, 09:00 to 15:00\n\nFreight: 22 skids of copy paper, 38,500 lbs total.\n\nRate: $1,450 USD all in.\n\nThanks,\nDana Kowalski\nLogistics, Northfield Paper Co.",
+  "receivedAt": "2026-11-16T10:12:00-05:00"
+}

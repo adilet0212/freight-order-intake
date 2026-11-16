@@ -1,0 +1,6 @@
+{
+  "messageId": "<demo-02-tender-5531@prairie-steel.example>",
+  "subject": "Coil shipment Regina to Minneapolis, ref 5531",
+  "body": "Hello,\n\nWe need a flatbed for steel coils, ref 5531.\n\nPickup: Prairie Steel Works, 1500 Ross Ave E, Regina, SK S4N 0R3\nPickup date to be confirmed. I will send it once the mill gives me a date.\n\nDelivery: Twin Rivers Fabrication, 3100 Pacific St, Minneapolis, MN 55411\nDelivery on Wednesday 25 November 2026, 07:00 to 11:00.\n\nFreight: 6 steel coils, 21,000 kg total.\n\nRate as per our contract.\n\nRegards,\nMarc Dubois\nPrairie Steel Works",
+  "receivedAt": "2026-11-16T11:40:00-06:00"
+}

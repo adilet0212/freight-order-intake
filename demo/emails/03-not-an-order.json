@@ -1,0 +1,6 @@
+{
+  "messageId": "<demo-03-remittance-0419@lakeview-foods.example>",
+  "subject": "Remittance advice - payment 0419",
+  "body": "Hi accounts team,\n\nThis is to let you know we sent payment 0419 by EFT today for the following invoices:\n\nINV-22817  $1,920.00 CAD\nINV-22840  $2,310.00 CAD\n\nTotal paid: $4,230.00 CAD.\n\nPlease let me know if anything does not match your records.\n\nBest,\nPriya Raman\nAccounts Payable, Lakeview Foods",
+  "receivedAt": "2026-11-16T13:05:00-05:00"
+}

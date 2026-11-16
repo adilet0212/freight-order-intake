@@ -220,3 +220,4 @@ Next, in roughly this order:
 - [SPEC.md](SPEC.md): the problem, the gate rules, the decisions.
 - [docs/TEST_PLAN.md](docs/TEST_PLAN.md): how the code and the extractions are checked.
 - [AGENT_LOG.md](AGENT_LOG.md): what the agent did, what it got wrong, and what I changed.
+- [docs/DEMO.md](docs/DEMO.md): a two-minute demo with the emails in `demo/emails/`.
