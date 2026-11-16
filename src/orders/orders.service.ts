@@ -2,17 +2,26 @@ import { createHash } from 'node:crypto';
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { AiModelError } from '@nestjs/ai';
 import { PROMPT_VERSION } from './extraction.prompt.js';
-import { ExtractionService } from './extraction.service.js';
+import {
+  ExtractionService,
+  type ExtractionResult,
+} from './extraction.service.js';
 import { normalizeOrder } from './normalize.js';
 import type {
   InboundEmail,
   NormalizedOrder,
   OrderStatus,
 } from './order.schema.js';
-import { OrdersRepository, type OrderView } from './orders.repository.js';
+import {
+  OrdersRepository,
+  type NewOrder,
+  type OrderView,
+} from './orders.repository.js';
 import { reviewGate } from './review-gate.js';
 
 export interface IngestResult {
@@ -21,74 +30,134 @@ export interface IngestResult {
   created: boolean;
 }
 
+/** What one extraction attempt stores: everything in an order except the email itself. */
+type Outcome = Omit<
+  NewOrder,
+  'messageId' | 'emailSubject' | 'emailBody' | 'emailReceivedAt'
+>;
+
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly extraction: ExtractionService,
     private readonly repository: OrdersRepository,
   ) {}
 
-  /** The whole pipeline for one email: dedupe, extract, normalize, gate, store. */
+  /**
+   * The whole pipeline for one email: dedupe, extract, normalize, gate, store.
+   *
+   * A repeated email returns the stored order without a model call, except when that order
+   * is extraction_failed: then extraction runs again, so re-sending is how an email is
+   * retried after a provider outage (SPEC section 7, decision 4).
+   */
   async ingest(email: InboundEmail): Promise<IngestResult> {
     const messageId = email.messageId ?? fingerprint(email);
 
-    // Cheap check first so a repeated email does not cost a model call.
-    const existingId = await this.repository.findIdByMessageId(messageId);
-    if (existingId)
-      return { order: await this.get(existingId), created: false };
+    // Cheap check first so a repeated email does not cost a model call. It only saves the
+    // call; the database decides the races below.
+    let stored = await this.repository.findByMessageId(messageId);
+    if (stored && stored.status !== 'extraction_failed')
+      return { order: await this.get(stored.id), created: false };
 
-    const result = await this.extraction.extract(email);
+    const attempt = await this.attemptExtraction(email);
+    const record: NewOrder = {
+      messageId,
+      emailSubject: email.subject,
+      emailBody: email.body,
+      emailReceivedAt: email.receivedAt,
+      ...attempt.outcome,
+    };
+
+    if (!stored) {
+      const id = await this.repository.create(record);
+      if (id) return { order: await this.get(id), created: true };
+      // null means another request stored the same email between our check and our insert.
+      // The unique index made the database, not this code, the judge of that race.
+      stored = (await this.repository.findByMessageId(messageId))!;
+    }
+
+    // The stored order is a failed extraction (or the race winner's order). Replace it only if
+    // the model answered: an outage on a re-send must not overwrite the earlier, kept answer.
+    // replaceFailed itself checks the status, so an order that is no longer failed is untouched.
+    if (attempt.modelAnswered)
+      await this.repository.replaceFailed(stored.id, record);
+    return { order: await this.get(stored.id), created: false };
+  }
+
+  /**
+   * One extraction, turned into what gets stored. A provider failure (timeout, 5xx, network
+   * error, refused key) after the AI module's retries becomes extraction_failed instead of a
+   * 500, because an email is never dropped. Anything else is a bug and still throws.
+   */
+  private async attemptExtraction(
+    email: InboundEmail,
+  ): Promise<{ modelAnswered: boolean; outcome: Outcome }> {
+    const startedAt = performance.now();
+    let result: ExtractionResult;
+    try {
+      result = await this.extraction.extract(email);
+    } catch (error) {
+      if (!(error instanceof AiModelError)) throw error;
+      this.logger.warn(
+        `Stored the email as extraction_failed: ${error.message}`,
+      );
+      return {
+        modelAnswered: false,
+        outcome: {
+          status: 'extraction_failed',
+          reviewReasons: [`Model provider failed: ${error.message}`],
+          order: null,
+          // There is no model answer to keep.
+          rawExtraction: null,
+          promptVersion: PROMPT_VERSION,
+          latencyMs: Math.round(performance.now() - startedAt),
+          inputTokens: 0,
+          outputTokens: 0,
+        },
+      };
+    }
+
     const metrics = {
       promptVersion: PROMPT_VERSION,
       latencyMs: result.latencyMs,
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
     };
-    const emailColumns = {
-      messageId,
-      emailSubject: email.subject,
-      emailBody: email.body,
-      emailReceivedAt: email.receivedAt,
-    };
-
-    let id: string | null;
     if (!result.ok) {
       // Never drop an email: a failed extraction is stored for a person to handle.
-      id = await this.repository.create({
-        ...emailColumns,
-        ...metrics,
-        status: 'extraction_failed',
-        reviewReasons: [
-          `Model output did not match the schema: ${result.error}`,
-        ],
-        order: null,
-        rawExtraction: { rawText: result.rawText },
-      });
-    } else {
-      const normalized = normalizeOrder(result.extracted);
-      const decision = reviewGate({
-        isOrderRequest: result.extracted.isOrderRequest,
-        order: normalized.order,
-        normalizeIssues: normalized.issues,
-        ambiguities: result.extracted.ambiguities,
-      });
-      id = await this.repository.create({
-        ...emailColumns,
+      return {
+        modelAnswered: true,
+        outcome: {
+          ...metrics,
+          status: 'extraction_failed',
+          reviewReasons: [
+            `Model output did not match the schema: ${result.error}`,
+          ],
+          order: null,
+          rawExtraction: { rawText: result.rawText },
+        },
+      };
+    }
+
+    const normalized = normalizeOrder(result.extracted);
+    const decision = reviewGate({
+      isOrderRequest: result.extracted.isOrderRequest,
+      order: normalized.order,
+      normalizeIssues: normalized.issues,
+      ambiguities: result.extracted.ambiguities,
+    });
+    return {
+      modelAnswered: true,
+      outcome: {
         ...metrics,
         status: decision.status,
         reviewReasons: decision.reasons,
         order: decision.status === 'not_an_order' ? null : normalized.order,
         rawExtraction: result.extracted,
-      });
-    }
-
-    // null means another request stored the same email between our check and our insert.
-    // The unique index made the database, not this code, the judge of that race.
-    if (id === null) {
-      const winnerId = await this.repository.findIdByMessageId(messageId);
-      return { order: await this.get(winnerId!), created: false };
-    }
-    return { order: await this.get(id), created: true };
+      },
+    };
   }
 
   async get(id: string): Promise<OrderView> {

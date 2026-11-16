@@ -22,13 +22,15 @@ Boundaries tested on purpose:
 
 ## 2. Do the tests have teeth?
 
-A test that cannot fail proves nothing. Three rules were broken on purpose and the suite re-run:
+A test that cannot fail proves nothing. These rules were broken on purpose and the suite re-run:
 
 | Change | Result |
 |---|---|
 | Removed `onConflictDoNothing` from the insert | The concurrent-duplicate test failed |
 | Payload rule `>` changed to `>=` | The truckload boundary test failed |
 | Date rule `<` changed to `<=` | The same-minute boundary test failed |
+| Removed `status = 'extraction_failed'` from the replace UPDATE | Both re-send race tests failed, 5 runs of 5 |
+| Re-send returned any stored order, failed or not | 1 unit and 4 API outage tests failed |
 
 Adilet: repeat at least two of these yourself, plus one of your own, and log it.
 
@@ -75,6 +77,7 @@ agent drafts to show the format, and each says so in `labelledBy` until it is ve
 
 - Any call to a real model. Nothing in this repo has been run against a live provider.
 - `src/eval/run.ts` end to end (its scoring functions are tested, the runner is not).
-- A provider outage (SPEC decision 4).
+- A real provider outage. The tests fake one with `providerError(503)` from `@nestjs/ai/testing`;
+  a real timeout, a dropped connection and a revoked key have not been tried.
 - Load, or more than two concurrent requests.
 - Emails longer than the 20,000 character limit, HTML email, attachments.
