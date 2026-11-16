@@ -1,5 +1,6 @@
 import { PRODUCT_NAME } from './brand.js';
 import { ConnectionIndicator } from './ConnectionIndicator.js';
+import { OrderScreen } from './order/OrderScreen.js';
 import { QueueScreen } from './queue/QueueScreen.js';
 import { paths, useRoute, type Route } from './route.js';
 import { EmptyBlock } from './ui/states.js';
@@ -42,7 +43,8 @@ function Screen({ route }: { route: Route }) {
     case 'queue':
       return <QueueScreen status={route.status} />;
     case 'order':
-      return <EmptyBlock title="Order" />;
+      // The key makes a different order a fresh screen: no state carries over.
+      return <OrderScreen key={route.id} id={route.id} />;
     case 'paste':
       return <EmptyBlock title="Paste an email" />;
     case 'not-found':
