@@ -93,3 +93,36 @@ _To fill in after reading every file. Be specific: file, line, what and why._
 - What I changed and why:
 - What I disagreed with:
 - SPEC decisions 1 to 7:
+
+---
+
+## Session 2: Sunday 15 Nov to Monday 16 Nov 2026, review console
+
+**Agent:** Claude Code (desktop app, `frontend` worktree). Full record:
+[docs/agent-session-2.md](https://github.com/adilet0212/freight-order-intake/blob/frontend/docs/agent-session-2.md)
+on branch `frontend` (not merged into `main`, not pushed when this entry was written).
+
+- Agent: built the review console in `web/` (queue, order screen with hold reasons and approve, paste-an-email form) and a WebSocket gateway that sends `order.created` and `order.approved`, in 11 commits plus the record. Backend changes limited to the gateway, CORS and their wiring.
+- Agent: verified typecheck and lint clean, 213 unit tests (49 API project, 164 web), 23 API tests on `intake_test_web`, 18 deliberate breaks each failing a test, and the screens in Chromium at 1024, 1280 and 1440 px with seeded data.
+- Agent: listed 17 mistakes. The main ones: guessed `.address()` in a test (caught by `tsc`); ran the API tests against a mangled `DATABASE_URL` and briefly read the failures as teeth checks (caught by the count, 22 of 23 failing); went on after one `pg_isready` "no response" without telling Adilet; three layout defects at 1024 px that no jsdom test could see (caught in the browser); three teeth-table rows written from memory and wrong (caught by checking against the recorded output).
+- Agent: not verified: no real model call, so a pasted email becoming a 201 order was never seen in a browser; `order.created` reaching a second browser window (only the API test); the commands in `web/README.md` exactly as written; CI.
+- Agent: left open: `approve` checks the status and updates in two steps, so two approvals at once can both succeed; the review endpoint does not validate date strings (500); `GET /orders` has no paging; the queue loads one request per order.
+
+### My review
+
+---
+
+## Session 3: Monday 16 Nov 2026, pre-walkin
+
+**Agent:** Claude Code (desktop app). The session reported Claude Fable 5.2 while planning and
+Claude Opus 5.5 while implementing. Full record: [docs/agent-session-3.md](docs/agent-session-3.md).
+Branch `pre-walkin`, cut from `c2b8643`.
+
+- Agent: drafted unlabelled eval emails 031–035 in `eval/drafts/` (rate quote, billing dispute, "where is my truck", two weights for one freight, a reply that moves the pickup date without saying it replaces the first). Did not open `eval/dataset`.
+- Agent: implemented SPEC decision 4, option (b): a provider failure after retries stores `extraction_failed` and returns 201; re-sending a failed email re-runs extraction and updates the same row through an `UPDATE … WHERE status = 'extraction_failed'`. 9 unit and 7 API tests added.
+- Agent: changed CI to run on every push and added a `compose-smoke` job (compose up, migrate, build, `GET /orders` answers 200).
+- Agent: verified 50 unit and 21 API tests on `intake_test_web` (Postgres 18.7), and three deliberate breaks each failing as expected.
+- Agent: listed 7 mistakes, all caught by the agent itself, e.g. draft 035 first put a delivery on US Thanksgiving, and its later reply first hinted the new date replaced the old one, against the brief.
+- Agent: not verified: the workflow has never run on GitHub; the compose job end to end; Postgres 16 and Node 22; a real provider outage (only `providerError(503)` from the fake model); `npm run eval`. Trade-offs noted: no cap on re-sends of a failed email, and the provider's error text is returned in `reviewReasons`.
+
+### My review
