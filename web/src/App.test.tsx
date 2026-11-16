@@ -1,7 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import { App } from './App.js';
 import { PRODUCT_NAME } from './brand.js';
-import { fakeLive } from './test/fakes.js';
+import { fakeApiWith, fakeLive, makeOrder } from './test/fakes.js';
 import { renderWithServices } from './test/render.js';
 
 describe('App shell', () => {
@@ -59,6 +59,30 @@ describe('App shell', () => {
     expect(
       await screen.findByRole('link', { name: 'Approved 0' }),
     ).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('opens the paste form and an order from their addresses', async () => {
+    window.location.hash = '#/paste';
+    const view = renderWithServices(<App />);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Paste an email' }),
+    ).toBeInTheDocument();
+    view.unmount();
+
+    const order = makeOrder();
+    window.location.hash = `#/orders/${order.id}`;
+    renderWithServices(<App />, { api: fakeApiWith([order]) });
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Maple Ridge Foods',
+      }),
+    ).toBeInTheDocument();
+    // An order belongs to the queue section of the navigation.
+    expect(screen.getByRole('link', { name: 'Queue' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it('says so when the address matches no screen', () => {

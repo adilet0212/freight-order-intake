@@ -830,3 +830,49 @@ table.queue {
 .approve-message {
   margin-bottom: 8px;
 }
+
+/* ---------- Paste an email ---------- */
+
+.paste {
+  max-width: 860px;
+}
+
+.paste-intro {
+  margin-bottom: 12px;
+}
+
+.paste-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.paste-form textarea {
+  font: 13px/1.5 var(--font);
+}
+
+.paste-form .notice {
+  margin-bottom: 0;
+}
+
+.paste-form .notice ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.paste-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+}
+
+.hint {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.paste-actions {
+  display: flex;
+  gap: 8px;
+}
