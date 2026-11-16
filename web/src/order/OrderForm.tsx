@@ -213,7 +213,7 @@ export function OrderForm({
                     />
                   )}
                 </Field>
-                <Field label="Postal code">
+                <Field label="Postal/ZIP">
                   {(id) => (
                     <input
                       id={id}
