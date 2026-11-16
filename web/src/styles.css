@@ -306,3 +306,231 @@ a:hover {
     animation: none;
   }
 }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Connection indicator ---------- */
+
+.connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.connection-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--none-mark);
+}
+
+.connection-live .connection-mark {
+  background: var(--accepted-mark);
+}
+
+.connection-reconnecting .connection-mark,
+.connection-offline .connection-mark {
+  background: var(--review-mark);
+}
+
+.connection-reconnecting,
+.connection-offline {
+  color: var(--review-fg);
+  font-weight: 600;
+}
+
+/* ---------- Status chips ---------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.chip-needs_review {
+  background: var(--review-bg);
+  color: var(--review-fg);
+}
+.chip-needs_review .chip-mark {
+  background: var(--review-mark);
+}
+.chip-extraction_failed {
+  background: var(--failed-bg);
+  color: var(--failed-fg);
+}
+.chip-extraction_failed .chip-mark {
+  background: var(--failed-mark);
+}
+.chip-auto_accepted {
+  background: var(--accepted-bg);
+  color: var(--accepted-fg);
+}
+.chip-auto_accepted .chip-mark {
+  background: var(--accepted-mark);
+}
+.chip-approved {
+  background: var(--approved-bg);
+  color: var(--approved-fg);
+}
+.chip-approved .chip-mark {
+  background: var(--approved-mark);
+}
+.chip-not_an_order {
+  background: var(--none-bg);
+  color: var(--none-fg);
+}
+.chip-not_an_order .chip-mark {
+  background: var(--none-mark);
+}
+
+/* ---------- Queue ---------- */
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.filter a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.filter a:hover {
+  border-color: var(--border-strong);
+  text-decoration: none;
+}
+
+.filter a[aria-current='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.filter .count {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.filter a[aria-current='true'] .count {
+  color: var(--accent-strong);
+}
+
+table.queue {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.queue th {
+  height: 30px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.queue td {
+  height: var(--row);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.queue tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.queue tbody tr:hover td {
+  background: var(--surface-muted);
+}
+
+/* A held row carries a mark on its left edge, in addition to its chip. */
+.queue tr.held td:first-child {
+  box-shadow: inset 3px 0 0 var(--review-mark);
+}
+
+.queue td.customer a {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.queue td.customer a:hover {
+  color: var(--accent);
+}
+
+.queue .from-subject {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.queue td.reason {
+  color: var(--text-muted);
+  max-width: 360px;
+}
+
+.new-tag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@keyframes arrive {
+  from {
+    background: var(--accent-soft);
+  }
+}
+
+.queue tr.arrived td {
+  animation: arrive 2.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queue tr.arrived td {
+    animation: none;
+  }
+}

@@ -1,4 +1,6 @@
 import { PRODUCT_NAME } from './brand.js';
+import { ConnectionIndicator } from './ConnectionIndicator.js';
+import { QueueScreen } from './queue/QueueScreen.js';
 import { paths, useRoute, type Route } from './route.js';
 import { EmptyBlock } from './ui/states.js';
 
@@ -26,6 +28,7 @@ export function App() {
             Paste an email
           </a>
         </nav>
+        <ConnectionIndicator />
       </header>
       <main className="app-main">
         <Screen route={route} />
@@ -37,7 +40,7 @@ export function App() {
 function Screen({ route }: { route: Route }) {
   switch (route.name) {
     case 'queue':
-      return <EmptyBlock title="Queue" />;
+      return <QueueScreen status={route.status} />;
     case 'order':
       return <EmptyBlock title="Order" />;
     case 'paste':
