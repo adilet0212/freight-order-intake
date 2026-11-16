@@ -12,6 +12,7 @@ import type {
   NormalizedOrder,
   OrderStatus,
 } from './order.schema.js';
+import { OrdersGateway } from './orders.gateway.js';
 import { OrdersRepository, type OrderView } from './orders.repository.js';
 import { reviewGate } from './review-gate.js';
 
@@ -26,6 +27,7 @@ export class OrdersService {
   constructor(
     private readonly extraction: ExtractionService,
     private readonly repository: OrdersRepository,
+    private readonly gateway: OrdersGateway,
   ) {}
 
   /** The whole pipeline for one email: dedupe, extract, normalize, gate, store. */
@@ -88,7 +90,11 @@ export class OrdersService {
       const winnerId = await this.repository.findIdByMessageId(messageId);
       return { order: await this.get(winnerId!), created: false };
     }
-    return { order: await this.get(id), created: true };
+    const order = await this.get(id);
+    // Told to the web clients only now that the order is stored, and only for a new one:
+    // a repeated email returned above and changed nothing.
+    this.gateway.orderCreated(order);
+    return { order, created: true };
   }
 
   async get(id: string): Promise<OrderView> {
@@ -113,7 +119,9 @@ export class OrdersService {
       );
     }
     await this.repository.approve(id, corrected);
-    return this.get(id);
+    const approved = await this.get(id);
+    this.gateway.orderApproved(approved);
+    return approved;
   }
 }
 
