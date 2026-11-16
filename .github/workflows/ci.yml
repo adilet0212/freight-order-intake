@@ -1,8 +1,13 @@
 name: CI
 on:
+  # Every branch, so a pushed branch is checked before anyone opens a pull request for it.
   push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same branch makes an older run's result irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -36,3 +41,68 @@ jobs:
       - run: npm run db:migrate
       - run: npm run test:e2e
       - run: npm run build
+
+  # Proves the README's local setup: the docker-compose database, the migration, and the
+  # built API answering from that database. No model is called, so no key is needed.
+  compose-smoke:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/intake
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@11
+      - run: npm ci
+
+      - name: Start Postgres from docker-compose.yml
+        run: docker compose up -d --wait
+
+      # The health check (pg_isready over the Unix socket) can pass while the image is still
+      # running docker/init.sql on its temporary server, which does not listen on TCP. The
+      # final server does, so a TCP answer means init.sql has finished. 30 x 1 s is ample
+      # for creating two empty databases.
+      - name: Wait until init.sql has run
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T db pg_isready -h 127.0.0.1 -U postgres; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Postgres never accepted TCP connections"
+          exit 1
+
+      - run: npm run db:migrate
+      - run: npm run build
+
+      # GET /orders answers 200 with [] only if the app booted, connected to the compose
+      # database and found the migrated orders table. 30 x 1 s covers Nest's start-up.
+      - name: Start the API and check it answers from the database
+        env:
+          PORT: '3000'
+          LLM_PROVIDER: anthropic
+          LLM_MODEL: placeholder-model
+          ANTHROPIC_API_KEY: placeholder-not-a-real-key
+        run: |
+          node dist/main.js > server.log 2>&1 &
+          body=''
+          for i in $(seq 1 30); do
+            if body=$(curl -fsS http://localhost:3000/orders); then
+              break
+            fi
+            sleep 1
+          done
+          echo "GET /orders answered: ${body:-nothing}"
+          test "$body" = '[]'
+
+      - name: Show logs
+        if: failure()
+        run: |
+          cat server.log || true
+          docker compose logs db
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down -v
