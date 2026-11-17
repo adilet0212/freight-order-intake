@@ -62,7 +62,15 @@ function errorMessage(error: unknown): string {
     : 'Something went wrong while loading orders.';
 }
 
-/** An order's content only changes when it is reviewed, which sets both of these. */
+/**
+ * Whether a list row still matches the order this store has its stops for.
+ *
+ * An order's stops change in two ways. Approval changes the status and sets reviewedAt.
+ * A re-send that re-extracts a failed order (order.reextracted) leaves reviewedAt alone,
+ * but either changes the status or leaves the order extraction_failed, which is stored
+ * with no stops before and after. So these two fields are enough. A new way of changing
+ * an order's stops would need its own marker here, such as an updated_at column.
+ */
 function sameVersion(a: OrderRow, b: OrderRow): boolean {
   return a.status === b.status && a.reviewedAt === b.reviewedAt;
 }
