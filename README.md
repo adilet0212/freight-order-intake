@@ -177,8 +177,8 @@ accuracy, latency p50/p95 and cost per 1,000 emails (set `PRICE_INPUT_PER_MTOK` 
 `PRICE_OUTPUT_PER_MTOK` for the cost line).
 
 - Label rules: [eval/LABEL_RULES.md](eval/LABEL_RULES.md)
-  For example: the customer is the company tendering the load (usually the broker), values
-  are recorded as written and never converted, and anything the email doesn't state is null.
+  For example: the customer is the company tendering the load (usually the broker), weights are in 
+  pounds, and anything the email doesn't state is null.
 - Every label is written by hand by me. A model grading a test set that a model labelled
   measures agreement, not correctness.
 - The agent may draft email text. Unlabelled drafts are in `eval/drafts/`.

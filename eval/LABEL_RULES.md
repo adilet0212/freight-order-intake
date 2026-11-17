@@ -1,12 +1,12 @@
 # Label rules
 
 Every label in eval/dataset is written by me (Adilet) from the email text alone.
-A label is the correct answer for one email, in two parts:
-1. Expected fields: what the email actually says, in the same shape the model returns.
-2. Expected status: what the review gate should decide.
+A label is { isOrderRequest, order }: whether the email is an order, and the correct
+normalized order (null if it is not an order). There is no expected status: the review gate
+decides the status, and the eval checks whether a wrong order was auto-accepted.
 
-Labels never invent, never convert and never optimize. Unit conversion is done by the code,
-and the 1 lb weight tolerance is applied by the scorer, not by the label.
+Labels never invent and never reorder. Weights are written in pounds, because the scorer
+compares normalized orders.
 
 ## Customer
 - The customer is the company sending (tendering) the load. If a broker sends it, the broker
@@ -17,8 +17,9 @@ and the 1 lb weight tolerance is applied by the scorer, not by the label.
 - Null when the email does not identify a company.
 
 ## Weight
-- Value and unit exactly as written (18,000 kg -> 18000, kg).
-- No weight in the email -> null, and the expected status is needs_review.
+- Weight in pounds. If the email gives kg, multiply by 2.20462 and round to a whole pound;
+  the scorer allows +/- 1 lb for that rounding.
+- No weight in the email -> null.
 
 ## Dates and times
 - Local wall-clock time as written. No time zone conversion.
