@@ -7,4 +7,4 @@ eval/results/*.json
 eval/results/
 eval/my-labels/
 # Local settings for the web app (VITE_API_URL). Vite reads it from web/.
-web/.env.local
+web/.env.local.DS_Store
