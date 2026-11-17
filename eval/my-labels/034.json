@@ -1,0 +1,42 @@
+{
+  "isOrderRequest": true,
+  "order": {
+    "customerName":"Papeterie Estrie inc.",
+    "referenceNumber":"PE-11893",
+    "equipmentType": "dry_van",
+    "stops": [
+      {
+        "type": "pickup",
+        "companyName": "Papeterie Estrie inc.",
+        "street":"1450 rue King Ouest",
+        "city": "Sherbrooke",
+        "region": "QC",
+        "postalCode": "J1J 2C2",
+        "windowStart": "2026-11-23T07:00",
+        "windowEnd": "2026-11-23T12:00"
+      },
+      {
+        "type": "delivery",
+        "companyName":"Hudson Valley Janitorial Supply",
+        "street": "88 Railroad Ave",
+        "city": "Albany",
+        "region": "NY",
+        "postalCode": "12205",
+        "windowStart": "2026-11-24T09:00",
+        "windowEnd": null
+      }
+    ],
+    "commodities": [
+      {
+        "description": "paper towel / bathroom tissue, non-hazardous",
+        "quantity": 26,
+        "commodityType": "skid",
+        "weightLbs": null
+      }
+    ],
+    "rateAmount": 1600,
+    "rateCurrency": "USD",
+    "specialInstructions": "53' dry van. Skids: 48x40, not stackable"
+  },
+  "notes": ""
+}

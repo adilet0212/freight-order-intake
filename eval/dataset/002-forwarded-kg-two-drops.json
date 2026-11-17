@@ -10,7 +10,7 @@
   "expected": {
     "isOrderRequest": true,
     "order": {
-      "customerName": "Nord Distribution",
+      "customerName": null,
       "referenceNumber": "NDX-7731",
       "equipmentType": "reefer",
       "stops": [
@@ -50,7 +50,7 @@
           "description": null,
           "quantity": 12,
           "commodityType": "skid",
-          "weightLbs": "11905"
+          "weightLbs": 11905
         }
       ],
       "rateAmount": null,
