@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { commodities, orders, stops, type OrderRow } from '../db/schema.js';
 import type { NormalizedOrder, OrderStatus } from './order.schema.js';
@@ -63,12 +63,47 @@ export class OrdersRepository {
     });
   }
 
-  async findIdByMessageId(messageId: string): Promise<string | undefined> {
+  /**
+   * Replaces a failed extraction with a new attempt's result, keeping the order's id and
+   * created_at. The status condition is inside the UPDATE, not in the caller, so when two
+   * re-sends race the second one waits on the row lock, re-checks the condition after the
+   * first commits, and matches nothing. Returns false, writing nothing, if the order is no
+   * longer extraction_failed.
+   */
+  async replaceFailed(id: string, input: NewOrder): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(orders)
+        .set({
+          status: input.status,
+          reviewReasons: input.reviewReasons,
+          ...orderColumns(input.order),
+          rawExtraction: input.rawExtraction,
+          promptVersion: input.promptVersion,
+          latencyMs: input.latencyMs,
+          inputTokens: input.inputTokens,
+          outputTokens: input.outputTokens,
+        })
+        .where(and(eq(orders.id, id), eq(orders.status, 'extraction_failed')))
+        .returning({ id: orders.id });
+      if (!row) return false;
+      // A failed extraction is stored without stops or commodities. The deletes make the
+      // replacement exact anyway, so this does not depend on that staying true.
+      await tx.delete(stops).where(eq(stops.orderId, id));
+      await tx.delete(commodities).where(eq(commodities.orderId, id));
+      if (input.order) await insertChildren(tx, id, input.order);
+      return true;
+    });
+  }
+
+  async findByMessageId(
+    messageId: string,
+  ): Promise<{ id: string; status: OrderStatus } | undefined> {
     const [row] = await this.db
-      .select({ id: orders.id })
+      .select({ id: orders.id, status: orders.status })
       .from(orders)
       .where(eq(orders.messageId, messageId));
-    return row?.id;
+    return row ? { id: row.id, status: row.status as OrderStatus } : undefined;
   }
 
   async findById(id: string): Promise<OrderView | undefined> {

@@ -1,5 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
-import { FakeModel, overrideModels } from '@nestjs/ai/testing';
+import { FakeModel, overrideModels, providerError } from '@nestjs/ai/testing';
 import { getDrizzleToken } from '@nestjs/drizzle';
 import { Test } from '@nestjs/testing';
 import { sql } from 'drizzle-orm';
@@ -193,6 +193,133 @@ describe('Orders gateway', () => {
       ['order.approved', { id: first.body.id, status: 'approved' }],
       ['order.created', { id: last.body.id, status: 'auto_accepted' }],
     ]);
+  });
+
+  describe('after a provider outage (SPEC section 7, decision 4)', () => {
+    /** Three 503s, one per attempt of the AI module's retry; retryAfter 0 skips the wait. */
+    const outage = () =>
+      [1, 2, 3].map(() => providerError(503, { retryAfter: 0 }));
+    const withId = {
+      ...email,
+      messageId: '<outage-1@mail.mapleridge.example>',
+    };
+
+    /**
+     * Sends a different, new email and waits for its order.created. Events arrive in the
+     * order they were sent, so after this anything sent before it is already recorded.
+     */
+    async function sentinel(received: Received[]) {
+      model.reply({ object: cleanExtractedOrder() });
+      const last = await request(app.getHttpServer())
+        .post('/emails')
+        .send({ ...email, subject: 'Load tender PO-48214' })
+        .expect(201);
+      const expected: Received = [
+        'order.created',
+        { id: last.body.id, status: 'auto_accepted' },
+      ];
+      await vi.waitFor(() => expect(received.at(-1)).toEqual(expected));
+      return expected;
+    }
+
+    it('sends order.created for an email stored as extraction_failed after an outage', async () => {
+      const received = await connect();
+      model.reply(...outage());
+
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      await vi.waitFor(() => expect(received).toHaveLength(1));
+      expect(received).toEqual([
+        ['order.created', { id: failed.body.id, status: 'extraction_failed' }],
+      ]);
+    });
+
+    it('sends order.reextracted with the new status when a re-send replaces the failed order', async () => {
+      const received = await connect();
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      model.reply(heldOrderAnswer());
+      const retried = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+      expect(retried.body).toMatchObject({
+        id: failed.body.id,
+        status: 'needs_review',
+      });
+      // Sent again once more: the order is no longer failed, so nothing is written.
+      await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+      const last = await sentinel(received);
+
+      expect(received).toEqual([
+        ['order.created', { id: failed.body.id, status: 'extraction_failed' }],
+        ['order.reextracted', { id: failed.body.id, status: 'needs_review' }],
+        last,
+      ]);
+    });
+
+    it('sends nothing when the re-send hits another outage', async () => {
+      const received = await connect();
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      model.reply(...outage());
+      await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+      const last = await sentinel(received);
+
+      expect(received).toEqual([
+        ['order.created', { id: failed.body.id, status: 'extraction_failed' }],
+        last,
+      ]);
+    });
+
+    it('sends one order.reextracted when two re-sends arrive at the same moment', async () => {
+      const received = await connect();
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      model.reply(
+        { object: cleanExtractedOrder(), delay: 50 },
+        { ...heldOrderAnswer(), delay: 50 },
+      );
+      await Promise.all([
+        request(app.getHttpServer()).post('/emails').send(withId).expect(200),
+        request(app.getHttpServer()).post('/emails').send(withId).expect(200),
+      ]);
+      const stored = await request(app.getHttpServer())
+        .get(`/orders/${failed.body.id}`)
+        .expect(200);
+      const last = await sentinel(received);
+
+      // Only the write that happened is announced, with the status that was kept.
+      expect(received).toEqual([
+        ['order.created', { id: failed.body.id, status: 'extraction_failed' }],
+        [
+          'order.reextracted',
+          { id: failed.body.id, status: stored.body.status },
+        ],
+        last,
+      ]);
+    });
   });
 
   it('sends each event to every connected client', async () => {

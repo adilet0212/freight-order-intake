@@ -485,6 +485,56 @@ describe('OrderScreen', () => {
     ).toBeInTheDocument();
   });
 
+  it('loads the new result when a re-send extracts the open failed order again', async () => {
+    const user = userEvent.setup();
+    const failed = makeOrder({
+      status: 'extraction_failed',
+      reviewReasons: ['Model provider failed: The provider answered 503'],
+      customerName: null,
+      referenceNumber: null,
+      equipmentType: null,
+      rateAmount: null,
+      rateCurrency: null,
+      stops: [],
+      commodities: [],
+    });
+    const current = { order: failed };
+    serve(current);
+    const live = fakeLive();
+    renderOrder(failed.id, live);
+
+    expect(
+      await screen.findByText(/The model could not be reached/),
+    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Customer'), 'Typed by hand');
+
+    current.order = heldOrder({ id: failed.id });
+    act(() => {
+      live.emit({
+        type: 'order.reextracted',
+        id: failed.id,
+        status: 'needs_review',
+      });
+    });
+
+    expect(
+      await screen.findByText(
+        /extracted again\. The order below is the new result/,
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByLabelText('Customer')).toHaveValue(
+        'Maple Ridge Foods',
+      ),
+    );
+    expect(
+      screen.queryByText(/The model could not be reached/),
+    ).not.toBeInTheDocument();
+    // Still held, so it can still be reviewed, now from the new extraction.
+    expect(screen.getByRole('button', { name: 'Approve order' })).toBeEnabled();
+    expect(patchCalls()).toHaveLength(0);
+  });
+
   it('switches to read-only when the order is approved in another window', async () => {
     const user = userEvent.setup();
     const order = heldOrder();

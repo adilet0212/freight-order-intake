@@ -4,6 +4,7 @@ import { allowedWebOrigins } from '../web-origin.js';
 import {
   ORDER_APPROVED,
   ORDER_CREATED,
+  ORDER_REEXTRACTED,
   type OrderEvents,
 } from './order-events.js';
 import type { OrderStatus } from './order.schema.js';
@@ -14,8 +15,8 @@ export interface Broadcaster {
 }
 
 /**
- * Tells connected web clients that an order was created or approved, so the review queue
- * updates without a refresh. It only sends: there are no message handlers, so clients
+ * Tells connected web clients that an order was created, re-extracted or approved, so the
+ * review queue updates without a refresh. It only sends: there are no message handlers, so clients
  * cannot push anything into the API through the socket.
  */
 @WebSocketGateway({
@@ -36,6 +37,13 @@ export class OrdersGateway {
     this.broadcast(ORDER_CREATED, {
       id: order.id,
       // The column is text, but the repository only ever writes an OrderStatus into it.
+      status: order.status as OrderStatus,
+    });
+  }
+
+  orderReextracted(order: { id: string; status: string }): void {
+    this.broadcast(ORDER_REEXTRACTED, {
+      id: order.id,
       status: order.status as OrderStatus,
     });
   }

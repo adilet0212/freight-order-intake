@@ -145,6 +145,45 @@ describe('PasteEmailScreen', () => {
     ).toHaveAttribute('href', `#/orders/${order.id}`);
   });
 
+  it('says the model could not be reached when the API stored the email after an outage, and retries on a second send', async () => {
+    const user = userEvent.setup();
+    const failed = makeOrder({
+      status: 'extraction_failed',
+      reviewReasons: [
+        'Model provider failed: The model call failed after 3 attempt(s) (fake/fake): The provider answered 503',
+      ],
+      stops: [],
+      commodities: [],
+    });
+    let attempts = 0;
+    serve(() => {
+      attempts += 1;
+      return attempts === 1
+        ? json(201, failed)
+        : json(200, { ...failed, status: 'needs_review', reviewReasons: [] });
+    });
+    renderScreen();
+
+    await fillIn(user);
+    await user.click(screen.getByRole('button', { name: 'Extract order' }));
+
+    expect(await screen.findByText('Order created.')).toBeInTheDocument();
+    expect(screen.getByText('Extraction failed')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /The model could not be reached.*Paste the email again to retry/,
+      ),
+    ).toBeInTheDocument();
+
+    // The text is still in the form, so retrying is pressing the button again.
+    await user.click(screen.getByRole('button', { name: 'Extract order' }));
+    expect(await screen.findByText('Needs review')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/The model could not be reached/),
+    ).not.toBeInTheDocument();
+    expect(sentBody(1)).toEqual(sentBody(0));
+  });
+
   it('sends nothing and names what is missing when the form is empty or blank', async () => {
     const user = userEvent.setup();
     serve(() => json(201, makeOrder()));

@@ -114,6 +114,13 @@ export function explainReason(reason: string): {
       match[1],
     );
   }
+  // Written by OrdersService, not the gate, when the provider failed after every retry.
+  if ((match = /^Model provider failed: (.*)$/s.exec(reason))) {
+    return plain(
+      'The model could not be reached, so nothing was filled in. Paste the email again to retry, or enter the order from the email.',
+      match[1],
+    );
+  }
   return plain(reason);
 }
 

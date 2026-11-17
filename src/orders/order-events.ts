@@ -13,9 +13,21 @@ import type { OrderStatus } from './order.schema.js';
  */
 export const ORDER_CREATED = 'order.created';
 export const ORDER_APPROVED = 'order.approved';
+export const ORDER_REEXTRACTED = 'order.reextracted';
 
 /** A new email was stored as an order. Not sent for a repeated email. */
 export interface OrderCreatedEvent {
+  id: string;
+  status: OrderStatus;
+}
+
+/**
+ * A re-sent email was extracted again and replaced an extraction_failed order. Same id, new
+ * content and usually a new status (it can still be extraction_failed, if the model's answer
+ * again did not match the schema). Not sent when the re-send changed nothing: another
+ * outage, an order that was not failed, or the second of two re-sends at the same moment.
+ */
+export interface OrderReextractedEvent {
   id: string;
   status: OrderStatus;
 }
@@ -29,4 +41,5 @@ export interface OrderApprovedEvent {
 export interface OrderEvents {
   [ORDER_CREATED]: OrderCreatedEvent;
   [ORDER_APPROVED]: OrderApprovedEvent;
+  [ORDER_REEXTRACTED]: OrderReextractedEvent;
 }

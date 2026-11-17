@@ -106,14 +106,18 @@ cover that name, so pass `VITE_API_URL` on the command line instead.
 - **Requests hang and the API log says Postgres.app could not verify "trust" authentication.**
   Postgres.app asks, once per app, whether that app may connect. Answer the dialog for your
   terminal. A process started detached from the terminal is refused without a dialog.
-- **A pasted email returns "The email was not stored".** The model provider failed or timed
-  out. Nothing was saved (SPEC decision 4), so it is safe to send it again.
+- **A pasted email comes back as Extraction failed, "The model could not be reached".** The
+  provider failed or timed out after every retry. The email is stored (SPEC decision 4). Press
+  **Extract order** again: re-sending the same email extracts it again, and the open queue and
+  order screen update by themselves (`order.reextracted`).
+- **A pasted email returns "The email was not stored".** The API failed for a reason other than
+  the provider. Nothing was saved, so it is safe to send it again.
 
 ## Tests
 
 ```bash
-npm test                      # 213 tests: 49 unit (API code) and 164 unit and component (web)
-npm run test:e2e              # 23 API tests, needs Postgres, uses a fake model
+npm test                      # 236 tests: 67 unit (API code) and 169 unit and component (web)
+npm run test:e2e              # 34 API tests, needs Postgres, uses a fake model
 npm run web:build             # production build of the console into web/dist
 ```
 
@@ -124,8 +128,8 @@ app on a free port and connects a real Socket.IO client to it.
 `npm run test:e2e` uses the `intake_test` database unless `DATABASE_URL` is set, and empties
 its tables. `npm run typecheck` and `npm run lint` cover `web/` as well as `src/` and `test/`.
 
-For the root README: the unit count there (41) is now 213 with the web tests, and the API count
-(14) is now 23.
+For the root README: the unit count there (41) is now 236 with the web tests, and the API count
+(14) is now 34.
 
 ## How it is put together
 

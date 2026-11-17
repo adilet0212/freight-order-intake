@@ -41,6 +41,15 @@ describe('parseOrderEvent', () => {
     ).toBeNull();
   });
 
+  it('accepts order.reextracted with any order status', () => {
+    expect(
+      parseOrderEvent('order.reextracted', { id: ID, status: 'auto_accepted' }),
+    ).toEqual({ type: 'order.reextracted', id: ID, status: 'auto_accepted' });
+    expect(
+      parseOrderEvent('order.reextracted', { id: ID, status: 'shipped' }),
+    ).toBeNull();
+  });
+
   it('drops anything of the wrong shape', () => {
     expect(parseOrderEvent('order.created', null)).toBeNull();
     expect(parseOrderEvent('order.created', 'text')).toBeNull();
@@ -131,10 +140,12 @@ describe('createLiveConnection', () => {
     socket.fire('order.created', { id: ID, status: 'shipped' });
     socket.fire('order.approved', { id: ID, status: 'approved' });
     socket.fire('order.approved', undefined);
+    socket.fire('order.reextracted', { id: ID, status: 'auto_accepted' });
 
     expect(events).toEqual([
       { type: 'order.created', id: ID, status: 'needs_review' },
       { type: 'order.approved', id: ID, status: 'approved' },
+      { type: 'order.reextracted', id: ID, status: 'auto_accepted' },
     ]);
   });
 

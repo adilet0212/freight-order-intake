@@ -2,6 +2,7 @@ import { useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError } from '../api/client.js';
 import type { Order } from '../api/types.js';
 import { localInputToIso, toLocalInputValue } from '../format.js';
+import { explainReason } from '../order/hold-reasons.js';
 import { StatusChip } from '../queue/StatusChip.js';
 import { paths } from '../route.js';
 import { useServices } from '../services.js';
@@ -215,6 +216,15 @@ export function PasteEmailScreen() {
             <a href={paths.order(state.order.id)}>Open the order</a>
           </div>
         )}
+        {/* The email is stored either way. Say why nothing was filled in, and so, after a
+            provider outage, that sending it again is the retry. */}
+        {state.phase === 'done' &&
+          state.order.status === 'extraction_failed' &&
+          state.order.reviewReasons[0] !== undefined && (
+            <div className="notice warning">
+              {explainReason(state.order.reviewReasons[0]).text}
+            </div>
+          )}
 
         <div className="paste-actions">
           <button type="submit" className="button primary" disabled={sending}>

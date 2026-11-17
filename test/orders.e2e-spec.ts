@@ -2,7 +2,7 @@ import {
   StandardSchemaValidationPipe,
   type INestApplication,
 } from '@nestjs/common';
-import { FakeModel, overrideModels } from '@nestjs/ai/testing';
+import { FakeModel, overrideModels, providerError } from '@nestjs/ai/testing';
 import { getDrizzleToken } from '@nestjs/drizzle';
 import { Test } from '@nestjs/testing';
 import { sql } from 'drizzle-orm';
@@ -10,6 +10,7 @@ import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
+import { OrdersRepository } from '../src/orders/orders.repository.js';
 import { cleanExtractedOrder } from './fixtures/extracted-order.js';
 
 const email = {
@@ -219,6 +220,206 @@ describe('Orders API', () => {
     expect(responses[0].body.id).toBe(responses[1].body.id);
     const all = await request(app.getHttpServer()).get('/orders').expect(200);
     expect(all.body).toHaveLength(1);
+  });
+
+  describe('provider outage (SPEC section 7, decision 4)', () => {
+    /**
+     * Three 503s: one per attempt of the AI module's retry (attempts: 3 in AppModule).
+     * retryAfter 0 makes the backoff zero, so the test does not wait seconds between attempts.
+     */
+    const outage = () =>
+      [1, 2, 3].map(() => providerError(503, { retryAfter: 0 }));
+    const withId = {
+      ...email,
+      messageId: '<outage-1@mail.mapleridge.example>',
+    };
+
+    it('stores the email as extraction_failed and returns 201', async () => {
+      model.reply(...outage());
+
+      const response = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      expect(model.calls).toHaveLength(3);
+      expect(response.body).toMatchObject({
+        status: 'extraction_failed',
+        messageId: withId.messageId,
+        emailBody: email.body,
+        rawExtraction: null,
+        stops: [],
+        commodities: [],
+      });
+      expect(response.body.reviewReasons).toEqual([
+        expect.stringContaining('Model provider failed'),
+      ]);
+      const failed = await request(app.getHttpServer())
+        .get('/orders?status=extraction_failed')
+        .expect(200);
+      expect(failed.body.map((order: { id: string }) => order.id)).toEqual([
+        response.body.id,
+      ]);
+    });
+
+    it('re-runs extraction when the same email is sent again, and updates the order', async () => {
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      model.reply({ object: cleanExtractedOrder() });
+      const retried = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+
+      expect(model.calls).toHaveLength(4);
+      expect(retried.body).toMatchObject({
+        id: failed.body.id,
+        createdAt: failed.body.createdAt,
+        status: 'auto_accepted',
+        reviewReasons: [],
+        customerName: 'Maple Ridge Foods',
+      });
+      expect(retried.body.rawExtraction.stops).toHaveLength(2);
+      expect(
+        retried.body.stops.map((stop: { city: string }) => stop.city),
+      ).toEqual(['Brampton', 'Chicago']);
+      const stored = await request(app.getHttpServer())
+        .get(`/orders/${failed.body.id}`)
+        .expect(200);
+      expect(stored.body).toEqual(retried.body);
+      const all = await request(app.getHttpServer()).get('/orders').expect(200);
+      expect(all.body).toHaveLength(1);
+    });
+
+    it('keeps the failed order unchanged when the re-send hits another outage', async () => {
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      model.reply(...outage());
+      const again = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+
+      expect(model.calls).toHaveLength(6);
+      expect(again.body).toEqual(failed.body);
+    });
+
+    it('also re-runs an order whose model answer did not match the schema', async () => {
+      model.reply({ object: { isOrderRequest: 'maybe' } });
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+      expect(failed.body.status).toBe('extraction_failed');
+
+      model.reply({ object: cleanExtractedOrder() });
+      const retried = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+      expect(retried.body).toMatchObject({
+        id: failed.body.id,
+        status: 'auto_accepted',
+      });
+    });
+
+    it('returns a re-sent order that did not fail unchanged, with no model call (200)', async () => {
+      const extracted = cleanExtractedOrder();
+      extracted.stops = [extracted.stops[0]];
+      model.reply({ object: extracted });
+      const held = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+      expect(held.body.status).toBe('needs_review');
+
+      const again = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(200);
+
+      expect(again.body).toEqual(held.body);
+      expect(model.calls).toHaveLength(1);
+    });
+
+    it('applies only one of two re-sends that arrive at the same moment', async () => {
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+
+      // Two different answers, so a double write would show.
+      const held = cleanExtractedOrder();
+      held.stops = [held.stops[0]];
+      model.reply(
+        { object: cleanExtractedOrder(), delay: 50 },
+        { object: held, delay: 50 },
+      );
+      const responses = await Promise.all([
+        request(app.getHttpServer()).post('/emails').send(withId),
+        request(app.getHttpServer()).post('/emails').send(withId),
+      ]);
+
+      expect(responses.map((response) => response.status)).toEqual([200, 200]);
+      const stored = await request(app.getHttpServer())
+        .get(`/orders/${failed.body.id}`)
+        .expect(200);
+      expect(['auto_accepted', 'needs_review']).toContain(stored.body.status);
+      expect(responses[0].body).toEqual(stored.body);
+      expect(responses[1].body).toEqual(stored.body);
+      const all = await request(app.getHttpServer()).get('/orders').expect(200);
+      expect(all.body).toHaveLength(1);
+    });
+
+    it('replaces a failed order only once, even when asked twice (the database checks the status)', async () => {
+      model.reply(...outage());
+      const failed = await request(app.getHttpServer())
+        .post('/emails')
+        .send(withId)
+        .expect(201);
+      const repository = app.get(OrdersRepository);
+      const replacement = (status: 'auto_accepted' | 'needs_review') => ({
+        status,
+        reviewReasons: [],
+        messageId: withId.messageId,
+        emailSubject: email.subject,
+        emailBody: email.body,
+        emailReceivedAt: email.receivedAt,
+        order: null,
+        rawExtraction: null,
+        promptVersion: 'v1',
+        latencyMs: 1,
+        inputTokens: 1,
+        outputTokens: 1,
+      });
+
+      expect(
+        await repository.replaceFailed(
+          failed.body.id,
+          replacement('auto_accepted'),
+        ),
+      ).toBe(true);
+      expect(
+        await repository.replaceFailed(
+          failed.body.id,
+          replacement('needs_review'),
+        ),
+      ).toBe(false);
+
+      const stored = await request(app.getHttpServer())
+        .get(`/orders/${failed.body.id}`)
+        .expect(200);
+      expect(stored.body.status).toBe('auto_accepted');
+    });
   });
 
   it('lets a reviewer correct a held order, replacing its stops', async () => {

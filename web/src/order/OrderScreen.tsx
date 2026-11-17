@@ -5,7 +5,11 @@ import { isHeld } from '../queue/queue-order.js';
 import { StatusChip } from '../queue/StatusChip.js';
 import { paths } from '../route.js';
 import { useServices } from '../services.js';
-import { ORDER_APPROVED, type OrderStatus } from '../shared.js';
+import {
+  ORDER_APPROVED,
+  ORDER_REEXTRACTED,
+  type OrderStatus,
+} from '../shared.js';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../ui/states.js';
 import { EmailPane } from './EmailPane.js';
 import { reasonItems } from './hold-reasons.js';
@@ -25,7 +29,8 @@ type LoadState =
   | { phase: 'error'; message: string }
   | { phase: 'ready'; order: Order };
 
-type Notice = 'approved' | 'approved-elsewhere' | 'already-reviewed' | null;
+type Notice =
+  'approved' | 'approved-elsewhere' | 'reextracted' | 'already-reviewed' | null;
 
 const NOTICES: Record<Exclude<Notice, null>, { tone: string; text: string }> = {
   approved: {
@@ -35,6 +40,10 @@ const NOTICES: Record<Exclude<Notice, null>, { tone: string; text: string }> = {
   'approved-elsewhere': {
     tone: 'info',
     text: 'This order was just approved in another window. It is shown here as approved. Any edits you had made were not saved.',
+  },
+  reextracted: {
+    tone: 'info',
+    text: 'The email was just sent again and extracted again. The order below is the new result. Any edits you had made were not saved.',
   },
   'already-reviewed': {
     tone: 'warning',
@@ -95,7 +104,16 @@ export function OrderScreen({ id }: { id: string }) {
   useEffect(
     () =>
       live.onOrderEvent((event) => {
-        if (event.id !== id || event.type !== ORDER_APPROVED) return;
+        if (event.id !== id) return;
+        // A re-send replaced this failed order with a new extraction. Load it, so an
+        // approval from here cannot overwrite the new result with an outdated form.
+        if (event.type === ORDER_REEXTRACTED) {
+          if (savingRef.current) return;
+          setNotice('reextracted');
+          setAttempt((count) => count + 1);
+          return;
+        }
+        if (event.type !== ORDER_APPROVED) return;
         // Approving here sends this same event back. The answer to the request has
         // updated the screen already, or is about to.
         if (savingRef.current || statusRef.current === 'approved') return;

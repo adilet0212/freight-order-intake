@@ -23,8 +23,10 @@ export {
 export {
   ORDER_APPROVED,
   ORDER_CREATED,
+  ORDER_REEXTRACTED,
   type OrderApprovedEvent,
   type OrderCreatedEvent,
+  type OrderReextractedEvent,
 } from '../../src/orders/order-events.js';
 export { MAX_PAYLOAD_LBS, reviewGate } from '../../src/orders/review-gate.js';
 export { parseLocalDateTime } from '../../src/orders/normalize.js';

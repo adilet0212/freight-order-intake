@@ -3,9 +3,11 @@ import { API_URL } from '../api/client.js';
 import {
   ORDER_APPROVED,
   ORDER_CREATED,
+  ORDER_REEXTRACTED,
   ORDER_STATUSES,
   type OrderApprovedEvent,
   type OrderCreatedEvent,
+  type OrderReextractedEvent,
   type OrderStatus,
 } from '../shared.js';
 
@@ -21,7 +23,8 @@ export type ConnectionState =
 
 export type OrderEvent =
   | ({ type: typeof ORDER_CREATED } & OrderCreatedEvent)
-  | ({ type: typeof ORDER_APPROVED } & OrderApprovedEvent);
+  | ({ type: typeof ORDER_APPROVED } & OrderApprovedEvent)
+  | ({ type: typeof ORDER_REEXTRACTED } & OrderReextractedEvent);
 
 export interface LiveConnection {
   getState: () => ConnectionState;
@@ -56,7 +59,7 @@ export function parseOrderEvent(
   if (type === ORDER_APPROVED) {
     return status === 'approved' ? { type, id, status } : null;
   }
-  if (type === ORDER_CREATED) {
+  if (type === ORDER_CREATED || type === ORDER_REEXTRACTED) {
     return ORDER_STATUSES.includes(status as OrderStatus)
       ? { type, id, status: status as OrderStatus }
       : null;
@@ -92,7 +95,7 @@ export function createLiveConnection(socket: SocketLike): LiveConnection {
   socket.on('connect_error', () => {
     setState(hasConnected ? 'reconnecting' : 'offline');
   });
-  for (const type of [ORDER_CREATED, ORDER_APPROVED]) {
+  for (const type of [ORDER_CREATED, ORDER_REEXTRACTED, ORDER_APPROVED]) {
     socket.on(type, (payload: unknown) => {
       const event = parseOrderEvent(type, payload);
       if (event) for (const listener of eventListeners) listener(event);

@@ -282,6 +282,38 @@ describe('QueueScreen', () => {
     expect(screen.getByText('0 held, 1 in total')).toBeInTheDocument();
   });
 
+  it('updates a failed order in place when a re-send extracts it again', async () => {
+    const failed = makeOrder({
+      status: 'extraction_failed',
+      customerName: null,
+      emailSubject: 'Load tender PO-48213',
+      reviewReasons: ['Model provider failed: The provider answered 503'],
+      stops: [],
+      commodities: [],
+    });
+    const orders: Order[] = [failed];
+    const live = fakeLive();
+    renderWithServices(<QueueScreen status={null} />, {
+      api: fakeApiWith(orders),
+      live,
+    });
+    await screen.findByText('Load tender PO-48213');
+
+    orders[0] = makeOrder({ id: failed.id, status: 'auto_accepted' });
+    act(() => {
+      live.emit({
+        type: 'order.reextracted',
+        id: failed.id,
+        status: 'auto_accepted',
+      });
+    });
+
+    const row = within(await screen.findByRole('row', { name: /Maple Ridge/ }));
+    expect(row.getByText('Auto-accepted')).toBeInTheDocument();
+    expect(row.queryByText('Extraction failed')).not.toBeInTheDocument();
+    expect(rows()).toHaveLength(1);
+  });
+
   it('shows a placeholder for the lane until the stops arrive, and says so if they cannot be read', async () => {
     const waiting = makeOrder({ customerName: 'Waiting Co' });
     const broken = makeOrder({ customerName: 'Broken Co' });

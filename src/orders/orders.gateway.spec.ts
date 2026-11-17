@@ -1,5 +1,9 @@
 import { Logger } from '@nestjs/common';
-import { ORDER_APPROVED, ORDER_CREATED } from './order-events.js';
+import {
+  ORDER_APPROVED,
+  ORDER_CREATED,
+  ORDER_REEXTRACTED,
+} from './order-events.js';
 import { OrdersGateway } from './orders.gateway.js';
 
 const ID = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
@@ -42,6 +46,25 @@ describe('OrdersGateway', () => {
       status: 'approved',
     });
     expect(ORDER_APPROVED).toBe('order.approved');
+  });
+
+  it('sends order.reextracted with the id and the new status, and nothing else', () => {
+    const gateway = new OrdersGateway();
+    const emit = vi.fn();
+    gateway.server = { emit };
+
+    gateway.orderReextracted({
+      id: ID,
+      status: 'auto_accepted',
+      emailBody: 'Please pick up 18 skids in Brampton',
+    } as { id: string; status: string });
+
+    expect(emit).toHaveBeenCalledTimes(1);
+    expect(emit).toHaveBeenCalledWith(ORDER_REEXTRACTED, {
+      id: ID,
+      status: 'auto_accepted',
+    });
+    expect(ORDER_REEXTRACTED).toBe('order.reextracted');
   });
 
   it('does nothing, and does not throw, when there is no socket server', () => {

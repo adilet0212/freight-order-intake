@@ -118,6 +118,18 @@ describe('explainReason', () => {
     expect(explained.detail).toBe('isOrderRequest: expected boolean');
   });
 
+  it('explains a provider failure, says how to retry, and keeps the technical message as detail', () => {
+    const explained = explainReason(
+      'Model provider failed: The model call failed after 3 attempt(s) (fake/fake): The provider answered 503',
+    );
+    expect(explained.text).toBe(
+      'The model could not be reached, so nothing was filled in. Paste the email again to retry, or enter the order from the email.',
+    );
+    expect(explained.detail).toBe(
+      'The model call failed after 3 attempt(s) (fake/fake): The provider answered 503',
+    );
+  });
+
   it('writes the weights with thousands separators', () => {
     expect(
       explainReason('Total weight 48000 lbs is over one truckload (45000 lbs)')

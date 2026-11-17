@@ -23,7 +23,7 @@ export const ORDER_STATUSES = [
   'auto_accepted', // passed every rule in the review gate
   'needs_review', // at least one rule fired; a person must confirm or correct
   'not_an_order', // the email is not a shipment request
-  'extraction_failed', // the model's answer did not match the schema
+  'extraction_failed', // the model's answer did not match the schema, or the provider failed
   'approved', // a person reviewed and saved it
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];

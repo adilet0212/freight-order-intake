@@ -16,8 +16,8 @@ model's extractions are right?** They are different questions with different too
 | Unit (web) | Pure functions: lane, queue sort and filter, form mapping, dates, the order store, the socket wrapper, the API client | `web/src/**/*.test.ts` | nothing |
 | Component (web) | Each screen in jsdom: queue, order with hold reasons and approve, paste form | `web/src/**/*.test.tsx` | nothing |
 
-`npm test` runs two Vitest projects: `api` (Node, 49 tests) and `web` (jsdom, 164 tests).
-`npm run test:e2e` runs 23 API tests.
+`npm test` runs two Vitest projects: `api` (Node, 67 tests) and `web` (jsdom, 169 tests).
+`npm run test:e2e` runs 34 API tests.
 
 API tests use the real database and a `FakeModel` from `@nestjs/ai/testing`. The database is real
 because the duplicate-email guarantee lives in a unique index, and a mocked repository cannot
@@ -51,13 +51,15 @@ Boundaries tested on purpose:
 
 ## 2. Do the tests have teeth?
 
-A test that cannot fail proves nothing. Three rules were broken on purpose and the suite re-run:
+A test that cannot fail proves nothing. These rules were broken on purpose and the suite re-run:
 
 | Change | Result |
 |---|---|
 | Removed `onConflictDoNothing` from the insert | The concurrent-duplicate test failed |
 | Payload rule `>` changed to `>=` | The truckload boundary test failed |
 | Date rule `<` changed to `<=` | The same-minute boundary test failed |
+| Removed `status = 'extraction_failed'` from the replace UPDATE | Both re-send race tests failed, 5 runs of 5 |
+| Re-send returned any stored order, failed or not | 1 unit and 4 API outage tests failed |
 
 Adilet: repeat at least two of these yourself, plus one of your own, and log it.
 
@@ -84,6 +86,11 @@ and the file restored. Every one failed at least one test in the file named.
 | Paste: always sent `messageId`, empty or not | `web/src/paste/PasteEmailScreen.test.tsx` |
 | Paste: skipped validation before sending | `web/src/paste/PasteEmailScreen.test.tsx` |
 | Order form: tied the Weight field to Quantity's message | `web/src/order/OrderScreen.test.tsx` |
+| Merge with the outage work: no `order.reextracted` after a re-send replaced a failed order | `src/orders/orders.service.spec.ts`, `test/orders-gateway.e2e-spec.ts` |
+| Merge: `order.reextracted` whenever the model answered, written or not | `orders.service.spec.ts` (refused replace), `orders-gateway.e2e-spec.ts` (two re-sends at once) |
+| Merge: no `order.created` for an email stored as extraction_failed | `test/orders-gateway.e2e-spec.ts` only; the unit spec's fake order has no status, so it cannot see this |
+| Web: no socket listener for `order.reextracted` | `web/src/live/connection.test.ts` |
+| Web: order screen ignores `order.reextracted` for the open order | `web/src/order/OrderScreen.test.tsx` |
 
 Note on the `referenceNumber` row: the output was cut to its first eight lines, all from
 `order-form.test.ts`. Whether the approve test in `OrderScreen.test.tsx` failed as well was not
@@ -159,7 +166,8 @@ browser" has a date and a scope.
 
 - Any call to a real model. Nothing in this repo has been run against a live provider.
 - `src/eval/run.ts` end to end (its scoring functions are tested, the runner is not).
-- A provider outage (SPEC decision 4).
+- A real provider outage. The tests fake one with `providerError(503)` from `@nestjs/ai/testing`;
+  a real timeout, a dropped connection and a revoked key have not been tried.
 - Load, or more than two concurrent requests.
 - Emails longer than the 20,000 character limit, HTML email, attachments.
 

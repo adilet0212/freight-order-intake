@@ -40,7 +40,8 @@ email -> dedupe by message id -> model (schema-constrained) -> normalize -> revi
 ```
 
 1. **Dedupe.** Look up the email's Message-ID (or a SHA-256 of the email when there is none).
-   If it exists, return the existing order with 200 and make no model call.
+   If it exists, return the existing order with 200 and make no model call, unless that order is
+   `extraction_failed`: then run the steps below again and update the same order (decision 4).
 2. **Extract.** One model call through `@nestjs/ai` with `extractedOrderSchema`. The model is told
    to return null for anything the email does not state, and to copy numbers without converting.
 3. **Normalize.** Pure code: kg to lbs, upper-case region and postal codes, reject dates that are
@@ -100,9 +101,15 @@ Each one is a real choice. Answer in a line, and record it in `AGENT_LOG.md`.
    prefix, "pallet" means skid, window end is null unless stated). Agree or change before
    labelling anything, because changing them later means relabelling everything.
 3. **The 45,000 lb limit.** Verify the number against a source you can cite, or change it.
-4. **Provider outage.** Today a provider error after three retries returns 500 and the email is
-   not stored. Options: (a) return 503 and rely on the sender retrying, which is safe because
-   ingestion is idempotent; (b) store the email as `extraction_failed` straight away.
+4. **Provider outage. Decided by Adilet: option (b).** A provider failure after the AI module's
+   three attempts (timeout, 5xx, network error, and also a refused key) stores the email as
+   `extraction_failed` and returns 201 with that status, instead of a 500 with nothing stored.
+   Sending the same email again (same Message-ID, or same content hash) re-runs extraction when
+   the stored order is `extraction_failed` and updates that order in place (same id, 200). If
+   the re-run hits another outage, nothing is written. Any other stored order is returned
+   unchanged with no model call, as before. Races stay in the database: the unique index decides
+   inserts, and the replacement is one `UPDATE … WHERE status = 'extraction_failed'`.
+   Option (a), 503 and rely on the sender retrying, was not chosen.
 5. **Commodities per stop.** Keep order-level commodities (simple, slightly wrong for multi-drop)
    or move them onto stops (matches the real model, more schema and more to label)?
 6. **Dataset size and mix.** Proposal: 30 emails. About 10 clean, 12 messy (forwarded threads,
