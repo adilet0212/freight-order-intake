@@ -22,10 +22,12 @@ compares normalized orders.
 - No weight in the email -> null.
 
 ## Dates and times
-- Local wall-clock time as written. No time zone conversion.
-- No time given -> the date only, time null. Never invent 00:00-23:59.
-- "Tomorrow" -> the received date plus one day. "Friday" -> the next Friday on or after the
-  received date. Whether these get held is the gate's decision, not the label's.
+- Format YYYY-MM-DDTHH:mm, local time at the stop. No time zone conversion.
+- A day with no time: window start 00:00, window end 23:59 (the system's own convention).
+- Only a start time: window end is null. "Before 14:00": start 00:00, end 14:00.
+- "Tomorrow" is the received date plus one day; "Friday" is the next Friday on or after the
+  received date. Whether these get held is the gate's decision.
+- A vague time with no clock time ("morning"): treat as a day with no time, and add a note.
 
 ## Stops
 - In the order the email gives them. Never reordered for a better route.
@@ -39,5 +41,4 @@ compares normalized orders.
 ## Contradictions and threads
 - In a thread, the latest message wins for any field it explicitly changes; earlier details
   stand otherwise.
-- If two values conflict with no explicit correction, the field is null and the expected
-  status is needs_review.
+- If two values conflict with no explicit correction, the field is null.
