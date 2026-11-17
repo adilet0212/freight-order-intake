@@ -41,6 +41,7 @@ jobs:
       - run: npm run db:migrate
       - run: npm run test:e2e
       - run: npm run build
+      - run: npm run web:build
 
   # Proves the README's local setup: the docker-compose database, the migration, and the
   # built API answering from that database. No model is called, so no key is needed.

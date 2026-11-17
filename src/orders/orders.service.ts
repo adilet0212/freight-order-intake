@@ -17,6 +17,7 @@ import type {
   NormalizedOrder,
   OrderStatus,
 } from './order.schema.js';
+import { OrdersGateway } from './orders.gateway.js';
 import {
   OrdersRepository,
   type NewOrder,
@@ -43,6 +44,7 @@ export class OrdersService {
   constructor(
     private readonly extraction: ExtractionService,
     private readonly repository: OrdersRepository,
+    private readonly gateway: OrdersGateway,
   ) {}
 
   /**
@@ -72,7 +74,14 @@ export class OrdersService {
 
     if (!stored) {
       const id = await this.repository.create(record);
-      if (id) return { order: await this.get(id), created: true };
+      if (id) {
+        const order = await this.get(id);
+        // Told to the web clients only now that the order is stored, and only for a new one,
+        // whatever its status: an outage stores extraction_failed, and that row belongs in
+        // the queue too.
+        this.gateway.orderCreated(order);
+        return { order, created: true };
+      }
       // null means another request stored the same email between our check and our insert.
       // The unique index made the database, not this code, the judge of that race.
       stored = (await this.repository.findByMessageId(messageId))!;
@@ -81,9 +90,14 @@ export class OrdersService {
     // The stored order is a failed extraction (or the race winner's order). Replace it only if
     // the model answered: an outage on a re-send must not overwrite the earlier, kept answer.
     // replaceFailed itself checks the status, so an order that is no longer failed is untouched.
-    if (attempt.modelAnswered)
-      await this.repository.replaceFailed(stored.id, record);
-    return { order: await this.get(stored.id), created: false };
+    const replaced =
+      attempt.modelAnswered &&
+      (await this.repository.replaceFailed(stored.id, record));
+    const order = await this.get(stored.id);
+    // Only when the row was written. No event for another outage, for an order that was
+    // not failed, or for the loser of two re-sends: in each of those nothing changed.
+    if (replaced) this.gateway.orderReextracted(order);
+    return { order, created: false };
   }
 
   /**
@@ -182,7 +196,9 @@ export class OrdersService {
       );
     }
     await this.repository.approve(id, corrected);
-    return this.get(id);
+    const approved = await this.get(id);
+    this.gateway.orderApproved(approved);
+    return approved;
   }
 }
 

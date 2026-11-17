@@ -10,6 +10,7 @@ import type {
   OrdersRepository,
   OrderView,
 } from './orders.repository.js';
+import type { OrdersGateway } from './orders.gateway.js';
 import { OrdersService } from './orders.service.js';
 
 const email: InboundEmail = {
@@ -55,11 +56,13 @@ function setup(stored?: { id: string; status: OrderStatus }) {
       .fn()
       .mockImplementation((id: string) => Promise.resolve({ id } as OrderView)),
   };
+  const gateway = { orderCreated: vi.fn(), orderReextracted: vi.fn() };
   const service = new OrdersService(
     { extract } as unknown as ExtractionService,
     repository as unknown as OrdersRepository,
+    gateway as unknown as OrdersGateway,
   );
-  return { service, extract, repository };
+  return { service, extract, repository, gateway };
 }
 
 describe('OrdersService.ingest on a provider failure', () => {
@@ -166,5 +169,101 @@ describe('OrdersService.ingest of an email already stored', () => {
       STORED_ID,
       expect.objectContaining({ status: 'auto_accepted' }),
     );
+  });
+});
+
+describe('OrdersService.ingest tells web clients only what it wrote', () => {
+  it.each(['the model answered', 'the provider failed'])(
+    'sends order.created for a new order when %s',
+    async (when) => {
+      const { service, extract, repository, gateway } = setup();
+      if (when === 'the provider failed') extract.mockRejectedValue(outage());
+      else extract.mockResolvedValue(answered());
+      repository.create.mockResolvedValue(STORED_ID);
+
+      await service.ingest(email);
+
+      expect(gateway.orderCreated).toHaveBeenCalledTimes(1);
+      expect(gateway.orderCreated).toHaveBeenCalledWith({ id: STORED_ID });
+      expect(gateway.orderReextracted).not.toHaveBeenCalled();
+    },
+  );
+
+  it('sends order.reextracted, not order.created, when a re-send replaces a failed order', async () => {
+    const { service, extract, gateway } = setup({
+      id: STORED_ID,
+      status: 'extraction_failed',
+    });
+    extract.mockResolvedValue(answered());
+
+    await service.ingest(email);
+
+    expect(gateway.orderReextracted).toHaveBeenCalledTimes(1);
+    expect(gateway.orderReextracted).toHaveBeenCalledWith({ id: STORED_ID });
+    expect(gateway.orderCreated).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing when a re-send hits another outage', async () => {
+    const { service, extract, gateway } = setup({
+      id: STORED_ID,
+      status: 'extraction_failed',
+    });
+    extract.mockRejectedValue(outage());
+
+    await service.ingest(email);
+
+    expect(gateway.orderCreated).not.toHaveBeenCalled();
+    expect(gateway.orderReextracted).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing when the database refused the replacement (the order was no longer failed)', async () => {
+    const { service, extract, repository, gateway } = setup({
+      id: STORED_ID,
+      status: 'extraction_failed',
+    });
+    extract.mockResolvedValue(answered());
+    repository.replaceFailed.mockResolvedValue(false);
+
+    await service.ingest(email);
+
+    expect(repository.replaceFailed).toHaveBeenCalledTimes(1);
+    expect(gateway.orderCreated).not.toHaveBeenCalled();
+    expect(gateway.orderReextracted).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing for a repeated email that was not failed', async () => {
+    const { service, gateway } = setup({
+      id: STORED_ID,
+      status: 'needs_review',
+    });
+
+    await service.ingest(email);
+
+    expect(gateway.orderCreated).not.toHaveBeenCalled();
+    expect(gateway.orderReextracted).not.toHaveBeenCalled();
+  });
+
+  it('sends only order.reextracted when it lost the insert race to a failed order and replaced it', async () => {
+    const { service, extract, repository, gateway } = setup();
+    extract.mockResolvedValue(answered());
+    repository.findByMessageId
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({ id: STORED_ID, status: 'extraction_failed' });
+    repository.create.mockResolvedValue(null);
+
+    await service.ingest(email);
+
+    // The winner's own request sent order.created for the row it stored.
+    expect(gateway.orderCreated).not.toHaveBeenCalled();
+    expect(gateway.orderReextracted).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends nothing when the error is not a provider failure', async () => {
+    const { service, extract, gateway } = setup();
+    extract.mockRejectedValue(new TypeError('a bug'));
+
+    await expect(service.ingest(email)).rejects.toThrow('a bug');
+    expect(gateway.orderCreated).not.toHaveBeenCalled();
+    expect(gateway.orderReextracted).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,902 @@
+/*
+ * One light theme. One accent colour (teal) for links, focus and the primary action.
+ * Status colours are a separate, fixed set and are used for status only. A status is
+ * always written out in words as well, never shown by colour alone.
+ */
+:root {
+  --font:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --bg: #f4f5f6;
+  --surface: #ffffff;
+  --surface-muted: #f9fafa;
+  --border: #dde1e4;
+  --border-strong: #bcc3c9;
+  --text: #1b2226;
+  --text-muted: #55616a;
+  --text-faint: #717c85;
+
+  --accent: #0f6b6b;
+  --accent-strong: #0a5353;
+  --accent-soft: #e2f0ef;
+  --on-accent: #ffffff;
+
+  /* Status: needs review (amber), extraction failed (brick red), auto-accepted (green),
+     approved (slate blue), not an order (grey). */
+  --review-bg: #fcefd2;
+  --review-fg: #734600;
+  --review-mark: #c27a00;
+  --failed-bg: #fae4df;
+  --failed-fg: #8a2413;
+  --failed-mark: #b3361f;
+  --accepted-bg: #e0f2e5;
+  --accepted-fg: #1b5731;
+  --accepted-mark: #2f8a50;
+  --approved-bg: #e3e9f5;
+  --approved-fg: #2b4176;
+  --approved-mark: #4863a8;
+  --none-bg: #eceef0;
+  --none-fg: #4c575f;
+  --none-mark: #8a949c;
+
+  --radius: 4px;
+  --row: 34px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 var(--font);
+  font-variant-numeric: tabular-nums;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.muted {
+  color: var(--text-muted);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* ---------- Shell ---------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 46px;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-name {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.app-nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.app-nav a {
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.app-nav a:hover {
+  background: var(--bg);
+  text-decoration: none;
+}
+
+.app-nav a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.app-main {
+  flex: 1;
+  padding: 16px 20px 32px;
+  min-width: 0;
+}
+
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  min-height: 30px;
+}
+
+.page-head .spacer {
+  flex: 1;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ---------- Buttons ---------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface-muted);
+  border-color: var(--text-faint);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.button.quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+  padding: 0 6px;
+}
+
+.button.quiet:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+/* ---------- Loading, empty and error blocks ---------- */
+
+.state {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.state h2 {
+  color: var(--text);
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.state .button {
+  margin-top: 12px;
+}
+
+.state.error h2 {
+  color: var(--failed-fg);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.notice.error {
+  border-left-color: var(--failed-mark);
+  background: var(--failed-bg);
+  color: var(--failed-fg);
+}
+
+.notice.success {
+  border-left-color: var(--accepted-mark);
+  background: var(--accepted-bg);
+  color: var(--accepted-fg);
+}
+
+.notice.info {
+  border-left-color: var(--approved-mark);
+  background: var(--approved-bg);
+  color: var(--approved-fg);
+}
+
+.notice.warning {
+  border-left-color: var(--review-mark);
+  background: var(--review-bg);
+  color: var(--review-fg);
+}
+
+.notice .spacer {
+  flex: 1;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.skeleton {
+  display: inline-block;
+  height: 10px;
+  width: 70%;
+  border-radius: 2px;
+  background: var(--border);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- Connection indicator ---------- */
+
+.connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.connection-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--none-mark);
+}
+
+.connection-live .connection-mark {
+  background: var(--accepted-mark);
+}
+
+.connection-reconnecting .connection-mark,
+.connection-offline .connection-mark {
+  background: var(--review-mark);
+}
+
+.connection-reconnecting,
+.connection-offline {
+  color: var(--review-fg);
+  font-weight: 600;
+}
+
+/* ---------- Status chips ---------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.chip-needs_review {
+  background: var(--review-bg);
+  color: var(--review-fg);
+}
+.chip-needs_review .chip-mark {
+  background: var(--review-mark);
+}
+.chip-extraction_failed {
+  background: var(--failed-bg);
+  color: var(--failed-fg);
+}
+.chip-extraction_failed .chip-mark {
+  background: var(--failed-mark);
+}
+.chip-auto_accepted {
+  background: var(--accepted-bg);
+  color: var(--accepted-fg);
+}
+.chip-auto_accepted .chip-mark {
+  background: var(--accepted-mark);
+}
+.chip-approved {
+  background: var(--approved-bg);
+  color: var(--approved-fg);
+}
+.chip-approved .chip-mark {
+  background: var(--approved-mark);
+}
+.chip-not_an_order {
+  background: var(--none-bg);
+  color: var(--none-fg);
+}
+.chip-not_an_order .chip-mark {
+  background: var(--none-mark);
+}
+
+/* ---------- Queue ---------- */
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.filter a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.filter a:hover {
+  border-color: var(--border-strong);
+  text-decoration: none;
+}
+
+.filter a[aria-current='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.filter .count {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.filter a[aria-current='true'] .count {
+  color: var(--accent-strong);
+}
+
+table.queue {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.queue th {
+  height: 30px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.queue td {
+  height: var(--row);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.queue tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.queue tbody tr:hover td {
+  background: var(--surface-muted);
+}
+
+/* A held row carries a mark on its left edge, in addition to its chip. */
+.queue tr.held td:first-child {
+  box-shadow: inset 3px 0 0 var(--review-mark);
+}
+
+.queue td.customer a {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.queue td.customer a:hover {
+  color: var(--accent);
+}
+
+.queue .from-subject {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.queue td.reason {
+  color: var(--text-muted);
+  max-width: 360px;
+}
+
+.new-tag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@keyframes arrive {
+  from {
+    background: var(--accent-soft);
+  }
+}
+
+.queue tr.arrived td {
+  animation: arrive 2.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queue tr.arrived td {
+    animation: none;
+  }
+}
+
+/* ---------- Order screen ---------- */
+
+.reasons {
+  margin-bottom: 12px;
+  border-left: 3px solid var(--review-mark);
+}
+
+.reasons header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 14px 0;
+}
+
+.reasons ul {
+  margin: 0;
+  padding: 8px 14px 10px;
+  list-style: none;
+}
+
+.reasons li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 0;
+}
+
+.reason-state {
+  flex: none;
+  /* Wide enough for the longest state, "CHECK THE EMAIL", on one line. */
+  width: 128px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reason-open .reason-state {
+  color: var(--review-fg);
+}
+
+.reason-check .reason-state {
+  color: var(--approved-fg);
+}
+
+.reason-fixed .reason-state {
+  color: var(--accepted-fg);
+}
+
+.reason-fixed .reason-text {
+  color: var(--text-faint);
+  text-decoration: line-through;
+}
+
+.reason-past {
+  color: var(--text-muted);
+}
+
+.reasons-none {
+  padding: 6px 14px 10px;
+  color: var(--text-muted);
+}
+
+.reasons ul + .reasons-none {
+  padding-top: 0;
+}
+
+.reasons details {
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+.reasons pre {
+  margin: 4px 0 0;
+  padding: 8px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  font: 12px/1.4 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.order-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 5fr) minmax(480px, 8fr);
+  gap: 12px;
+  align-items: start;
+}
+
+/* Below a small laptop the two columns no longer fit side by side. */
+@media (max-width: 1000px) {
+  .order-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.email {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 24px);
+}
+
+.email header,
+.form-section > h2 {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.email dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.email dt {
+  color: var(--text-muted);
+}
+
+.email dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.email-body {
+  margin: 0;
+  padding: 12px 14px;
+  overflow: auto;
+  font: 13px/1.5 var(--font);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.order-form {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.form-section {
+  margin-bottom: 12px;
+}
+
+.form-section > p {
+  padding: 10px 14px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 10px;
+  padding: 10px 14px 12px;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* A freight line's four fields each get a column, so the unit select is wide enough for its
+   longest option ("Not stated", "Container") at laptop width. Description gets the most. */
+.grid.freight {
+  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 2fr));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+.span-3 {
+  grid-column: span 3;
+}
+.span-4 {
+  grid-column: span 4;
+}
+
+.field label,
+.row-group legend {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* A label that wrapped would push its input below the others in the same row. */
+.field label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 28px;
+  padding: 3px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  border-color: var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+  opacity: 1;
+}
+
+.field.invalid input {
+  border-color: var(--failed-mark);
+}
+
+.field-error,
+.approve-message.error {
+  color: var(--failed-fg);
+}
+
+.field-error {
+  font-size: 12px;
+}
+
+.row-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Pulled up into the grid's bottom padding so it reads as part of the row. */
+  margin-top: -6px;
+  padding: 0 14px 10px;
+}
+
+.row-group {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  min-width: 0;
+}
+
+.form-section > h2 + .row-group {
+  border-top: 0;
+}
+
+.row-group legend {
+  float: left;
+  width: 100%;
+  padding: 10px 14px 0;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.row-group .grid {
+  clear: both;
+  padding-top: 6px;
+}
+
+.row-group .remove {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  height: 24px;
+}
+
+.add-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.total {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.total .muted {
+  font-weight: 400;
+}
+
+.approve-bar {
+  position: sticky;
+  bottom: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
+}
+
+.approve-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.approve-message {
+  margin-bottom: 8px;
+}
+
+/* ---------- Paste an email ---------- */
+
+.paste {
+  max-width: 860px;
+}
+
+.paste-intro {
+  margin-bottom: 12px;
+}
+
+.paste-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.paste-form textarea {
+  font: 13px/1.5 var(--font);
+}
+
+.paste-form .notice {
+  margin-bottom: 0;
+}
+
+.paste-form .notice ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.paste-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+}
+
+.hint {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.paste-actions {
+  display: flex;
+  gap: 8px;
+}
