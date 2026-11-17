@@ -702,6 +702,12 @@ table.queue {
   min-width: 0;
 }
 
+/* A freight line's four fields each get a column, so the unit select is wide enough for its
+   longest option ("Not stated", "Container") at laptop width. Description gets the most. */
+.grid.freight {
+  grid-template-columns: minmax(0, 3fr) repeat(3, minmax(0, 2fr));
+}
+
 .field {
   display: flex;
   flex-direction: column;

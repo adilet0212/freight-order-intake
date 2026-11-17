@@ -205,7 +205,11 @@ export function PasteEmailScreen() {
           </div>
         )}
         {state.phase === 'done' && (
-          <div className="notice success" role="status">
+          // Green only for a new order. An email already stored is news, not a success.
+          <div
+            className={`notice ${state.created ? 'success' : 'info'}`}
+            role="status"
+          >
             <span>
               {state.created
                 ? 'Order created.'

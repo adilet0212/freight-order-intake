@@ -306,8 +306,8 @@ export function OrderForm({
         {form.commodities.map((commodity, index) => (
           <fieldset key={commodity.key} className="row-group">
             <legend>Freight line {index + 1}</legend>
-            <div className="grid">
-              <Field label="Description" span={2}>
+            <div className="grid freight">
+              <Field label="Description">
                 {(id) => (
                   <input
                     id={id}
@@ -318,46 +318,44 @@ export function OrderForm({
                   />
                 )}
               </Field>
-              <div className="pair">
-                <Field
-                  label="Quantity"
-                  error={errorFor(`commodities.${index}.quantity`)}
-                  errorId={`${formId}-${commodity.key}-quantity`}
-                >
-                  {(id, describedBy) => (
-                    <input
-                      id={id}
-                      inputMode="numeric"
-                      value={commodity.quantity}
-                      aria-invalid={describedBy ? true : undefined}
-                      aria-describedby={describedBy}
-                      onChange={(event) =>
-                        setCommodity(index, { quantity: event.target.value })
-                      }
-                    />
-                  )}
-                </Field>
-                <Field label="Unit type">
-                  {(id) => (
-                    <select
-                      id={id}
-                      value={commodity.commodityType}
-                      onChange={(event) =>
-                        setCommodity(index, {
-                          commodityType: event.target.value,
-                        })
-                      }
-                    >
-                      <option value="">Not stated</option>
-                      {COMMODITY_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {capitalised(type)}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </Field>
-              </div>
+              <Field
+                label="Quantity"
+                error={errorFor(`commodities.${index}.quantity`)}
+                errorId={`${formId}-${commodity.key}-quantity`}
+              >
+                {(id, describedBy) => (
+                  <input
+                    id={id}
+                    inputMode="numeric"
+                    value={commodity.quantity}
+                    aria-invalid={describedBy ? true : undefined}
+                    aria-describedby={describedBy}
+                    onChange={(event) =>
+                      setCommodity(index, { quantity: event.target.value })
+                    }
+                  />
+                )}
+              </Field>
+              <Field label="Unit type">
+                {(id) => (
+                  <select
+                    id={id}
+                    value={commodity.commodityType}
+                    onChange={(event) =>
+                      setCommodity(index, {
+                        commodityType: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Not stated</option>
+                    {COMMODITY_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {capitalised(type)}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </Field>
               <Field
                 label="Weight (lbs)"
                 error={errorFor(`commodities.${index}.weightLbs`)}

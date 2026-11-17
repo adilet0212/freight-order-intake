@@ -92,8 +92,8 @@ VITE_API_URL=http://localhost:3100 npm run web:dev
 ```
 
 The web app never reads the repository's `.env`. Vite's root is `web/`, so the model key cannot
-end up in the browser bundle. Vite would read a `web/.env.local`, but `.gitignore` does not
-cover that name, so pass `VITE_API_URL` on the command line instead.
+end up in the browser bundle. To keep `VITE_API_URL` set, put it in `web/.env.local`, which
+Vite reads and `.gitignore` keeps out of git.
 
 ## When it does not work
 

@@ -85,6 +85,7 @@ describe('PasteEmailScreen', () => {
       await screen.findByText('Order created.').then((el) => el.parentElement!),
     );
     expect(result.getByText('Needs review')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveClass('notice', 'success');
     expect(
       result.getByRole('link', { name: 'Open the order' }),
     ).toHaveAttribute('href', `#/orders/${order.id}`);
@@ -143,6 +144,9 @@ describe('PasteEmailScreen', () => {
     expect(
       screen.getByRole('link', { name: 'Open the order' }),
     ).toHaveAttribute('href', `#/orders/${order.id}`);
+    // Neutral, not the green of a new order.
+    expect(screen.getByRole('status')).toHaveClass('notice', 'info');
+    expect(screen.getByRole('status')).not.toHaveClass('success');
   });
 
   it('says the model could not be reached when the API stored the email after an outage, and retries on a second send', async () => {
