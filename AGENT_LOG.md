@@ -126,3 +126,6 @@ Branch `pre-walkin`, cut from `c2b8643`.
 - Agent: not verified: the workflow has never run on GitHub; the compose job end to end; Postgres 16 and Node 22; a real provider outage (only `providerError(503)` from the fake model); `npm run eval`. Trade-offs noted: no cap on re-sends of a failed email, and the provider's error text is returned in `reviewReasons`.
 
 ### My review
+Case 001: labelled blind. No disagreement on content with the agent's draft. My first draft
+had two format mistakes (free-text equipment type instead of the enum value; the model's
+weight fields instead of the normalized weightLbs), found by diffing against the draft.

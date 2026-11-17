@@ -42,3 +42,7 @@ compares normalized orders.
 - In a thread, the latest message wins for any field it explicitly changes; earlier details
   stand otherwise.
 - If two values conflict with no explicit correction, the field is null.
+
+## Reference number and enums
+- Reference number: the number only, without labels like "PO" or "Ref".
+- Enum fields use the exact schema value (dry_van, skid), not free text.

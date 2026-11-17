@@ -1,7 +1,7 @@
 {
   "id": "002-forwarded-kg-two-drops",
   "description": "Forwarded thread where the newer message corrects the older one; kilograms; two deliveries; relative date",
-  "labelledBy": "agent draft - Adilet to verify by hand",
+  "labelledBy": "Adilet",
   "email": {
     "subject": "Fwd: RE: Montreal pickup tomorrow",
     "body": "can you guys cover this? need it picked up tomorrow. see below, note the weight changed\n\nSent from my iPhone\n\n---------- Forwarded message ---------\nFrom: Luc Tremblay <luc@norddistribution.example>\nDate: Mon, Nov 16, 2026 at 2:10 PM\nSubject: RE: Montreal pickup\n\nCorrection to my earlier note - it's 12 pallets not 10, total 5 400 kg. Reefer, keep at 2C.\nPick up at our dock: Nord Distribution, 8800 boul. Henri-Bourassa O, Montréal QC H4S 1P4, anytime after 7h.\nDrop 1: 5 pallets to Fresh Basket #212, 1455 Bank St, Ottawa ON K1H 7Z1\nDrop 2: 7 pallets to Fresh Basket #340, 2200 Eglinton Ave E, Scarborough ON M1L 4S8, must deliver Wednesday before 14:00\nRef NDX-7731\n\n> On Nov 16, 2026, at 9:02 AM, Luc Tremblay wrote:\n> 10 pallets, 4 500 kg going to Ottawa and Scarborough, dry van is fine.",
@@ -50,7 +50,7 @@
           "description": null,
           "quantity": 12,
           "commodityType": "skid",
-          "weightLbs": 11905
+          "weightLbs": "11905"
         }
       ],
       "rateAmount": null,
